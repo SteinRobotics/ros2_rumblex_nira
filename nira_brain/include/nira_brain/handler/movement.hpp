@@ -1,0 +1,58 @@
+#pragma once
+
+#include <chrono>
+#include <functional>
+#include <optional>
+
+#include "gait/gait_controller.hpp"
+#include "handler/face_preview.hpp"
+#include "ihandler.hpp"
+#include "requester/irequester.hpp"
+#include "nira_utils/body_pose.hpp"
+#include "std_msgs/msg/string.hpp"
+
+namespace brain {
+class CMovement : public IHandler {
+   public:
+    explicit CMovement(std::shared_ptr<rclcpp::Node> node);
+    void update() override;
+    void cancel() override;
+    // These describe planned gait state, not measured hardware motion. Before
+    // initial pose feedback, motion state is not yet meaningful.
+    bool motionStopped() const {
+        return gait_controller_->motionStopped();
+    }
+    bool stopRequested() const {
+        return gait_controller_->stopRequested();
+    }
+    void run(std::shared_ptr<RequestMovementType> request);
+    void run(std::shared_ptr<RequestVelocity> request);
+    bool takeSequenceAbort() {
+        return gait_controller_->takeSequenceAbort();
+    }
+    std::function<void(const MovementRequest&)> on_gait_changed;
+
+   private:
+    void onInitialPose(const nira_interfaces::msg::BodyPose& pose);
+    void startRequest(const MovementRequest& request);
+    void updateRequestCompletion();
+    std::shared_ptr<rclcpp::Node> node_;
+    std::shared_ptr<CPoseModel> pose_model_;
+    std::unique_ptr<CGaitController> gait_controller_;
+    rclcpp::Publisher<nira_interfaces::msg::BodyPose>::SharedPtr pub_body_pose_;
+    rclcpp::Subscription<nira_interfaces::msg::BodyPose>::SharedPtr sub_body_pose_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_movement_name_;
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_movement_velocity_;
+    std::unique_ptr<FacePreview> face_preview_;
+    Velocity velocity_;
+    CPose torso_;
+    COrientation head_;
+    bool initialized_ = false;
+    std::optional<MovementRequest> pending_request_;
+    std::optional<MovementRequest> tracked_request_;
+    std::optional<rclcpp::Time> dwell_deadline_;
+    nira_interfaces::msg::BodyPose last_pose_;
+    std::chrono::steady_clock::time_point next_update_{};
+    std::optional<std::chrono::steady_clock::time_point> last_update_;
+};
+}  // namespace brain

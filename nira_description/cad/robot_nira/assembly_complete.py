@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Complete robot, using the same joint interfaces as a single leg."""
+
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from robot_nira import EXPORT_DIR
+
+from build123d import Compound
+from common.export_utils import export_stl_ignoring_degenerate_faces
+
+import robot_nira.assembly_torso_with_servos as assembly_torso_with_servos
+import robot_nira.assembly_coxa as assembly_coxa
+import robot_nira.assembly_head as assembly_head
+import robot_nira.assembly_leg as assembly_leg
+from utils.ocp_utils import show
+from ocp_vscode import save_screenshot
+
+OCVSCODE_SCREENSHOT = True
+
+LAYDOWN_ANGLE_FEMUR = -60.0
+LAYDOWN_ANGLE_TIBIA = -60.0
+
+STANDUP_ANGLE_FEMUR = 0
+STANDUP_ANGLE_TIBIA = 0
+
+WALKING_ANGLE_FEMUR = 20
+WALKING_ANGLE_TIBIA = 20
+
+# Choose "laydown", "standing", or "walking" for the exported assembly.
+POSTURE = "standing"
+POSTURE_ANGLES = {
+    "laydown": (LAYDOWN_ANGLE_FEMUR, LAYDOWN_ANGLE_TIBIA),
+    "standing": (STANDUP_ANGLE_FEMUR, STANDUP_ANGLE_TIBIA),
+    "walking": (WALKING_ANGLE_FEMUR, WALKING_ANGLE_TIBIA),
+}
+posture_femur, posture_tibia = POSTURE_ANGLES[POSTURE]
+
+ANGLE_LEG_FEMUR = assembly_leg.ANGLE_FEMUR - 90 + posture_femur
+ANGLE_LEG_TIBIA = assembly_leg.ANGLE_TIBIA - 90 + posture_tibia
+ANGLE_HEAD_YAW = 0.0
+ANGLE_HEAD_PITCH = -60.0
+
+
+def build_assembly() -> Compound:
+    body = assembly_torso_with_servos.build_assembly()
+    servos = {child.label: child for child in body.children if child.label.startswith("servo_")}
+    coxa_head = assembly_coxa.build_assembly()
+    servos["servo_head"].joints["rotation"].connect_to(
+        coxa_head.joints["body_to_coxa_fixed"], angle=ANGLE_HEAD_YAW % 360
+    )
+    head = assembly_head.build_assembly()
+    coxa_head.joints["coxa_to_femur_fixed"].connect_to(
+        head.joints["pitch"], angle=ANGLE_HEAD_PITCH % 360
+    )
+
+    legs = []
+    for name, servo in servos.items():
+        if name == "servo_head":
+            continue
+        leg = assembly_leg.attach_leg(
+            servo, femur_angle=ANGLE_LEG_FEMUR, tibia_angle=ANGLE_LEG_TIBIA
+        )
+        leg.label = name.replace("servo_", "leg_", 1)
+        legs.append(leg)
+    return Compound(label="assembly_complete", children=[body, coxa_head, head, *legs])
+
+
+def main() -> None:
+    assembly = build_assembly()
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+    (EXPORT_DIR / "stl").mkdir(parents=True, exist_ok=True)
+    # export_step(assembly, str(EXPORT_DIR / "step/assembly_complete.step"))
+    export_stl_ignoring_degenerate_faces(assembly, str(EXPORT_DIR / "stl/assembly_complete.stl"))
+    show(assembly, name="assembly_complete", clear=True)
+
+    if OCVSCODE_SCREENSHOT:
+        save_screenshot(str(EXPORT_DIR / "assembly_complete.png"))
+
+
+if __name__ == "__main__":
+    main()
