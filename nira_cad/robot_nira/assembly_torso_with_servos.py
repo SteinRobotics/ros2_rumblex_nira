@@ -9,18 +9,18 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import math
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl
 
-from nira_cad.robot_nira.board_layout import Placement, BOARD_MOUNTS
-from nira_cad.robot_nira import torso_layout
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+from robot_nira.board_layout import Placement, BOARD_MOUNTS
+from robot_nira import torso_layout
+from utils.colors import COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
-import nira_cad.robot_nira.assembly_torso as assembly_torso
-import nira_cad.robot_nira.torso_common as torso_common
-import nira_cad.common.servo_feetech_hls3950m as servo_feetech_hls3950m
+import robot_nira.assembly_torso as assembly_torso
+import robot_nira.torso_common as torso_common
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
 
 
 servo_by_name = {}

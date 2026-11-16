@@ -7,35 +7,35 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
-from nira_cad.utils.colors import COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_TITAN_SILVER
+from utils.colors import COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_TITAN_SILVER
 
-import nira_cad.common.battery as battery
-import nira_cad.common.toe as toe
-import nira_cad.utils.spacer as spacer
-import nira_cad.robot_nira.torso_common as torso_common
-import nira_cad.robot_nira.torso_layer_0 as torso_layer_0
-import nira_cad.robot_nira.torso_layer_1 as torso_layer_1
-import nira_cad.robot_nira.torso_layer_2 as torso_layer_2
-import nira_cad.robot_nira.torso_layer_2_addon as torso_layer_2_addon
-import nira_cad.robot_nira.torso_layer_2_cover as torso_layer_2_cover
-import nira_cad.robot_nira.torso_layer_3 as torso_layer_3
-import nira_cad.robot_nira.torso_layer_4 as torso_layer_4
-import nira_cad.robot_nira.chassis_diagonal_back as chassis_diagonal_back
-import nira_cad.robot_nira.chassis_side as chassis_side
-from nira_cad.robot_nira import chassis_back_inner
-import nira_cad.robot_nira.chassis_slope_cover as chassis_slope_cover
-from nira_cad.robot_nira import board_ydlidar_tmini_interface
-from nira_cad.robot_nira import lidar_ydlidar_tmini
-from nira_cad.robot_nira import lidar_interface_housing
-from nira_cad.robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LIDAR_Y
+import common.battery as battery
+import common.toe as toe
+import utils.spacer as spacer
+import robot_nira.torso_common as torso_common
+import robot_nira.torso_layer_0 as torso_layer_0
+import robot_nira.torso_layer_1 as torso_layer_1
+import robot_nira.torso_layer_2 as torso_layer_2
+import robot_nira.torso_layer_2_addon as torso_layer_2_addon
+import robot_nira.torso_layer_2_cover as torso_layer_2_cover
+import robot_nira.torso_layer_3 as torso_layer_3
+import robot_nira.torso_layer_4 as torso_layer_4
+import robot_nira.chassis_diagonal_back as chassis_diagonal_back
+import robot_nira.chassis_side as chassis_side
+from robot_nira import chassis_back_inner
+import robot_nira.chassis_slope_cover as chassis_slope_cover
+from robot_nira import board_ydlidar_tmini_interface
+from robot_nira import lidar_ydlidar_tmini
+from robot_nira import lidar_interface_housing
+from robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LIDAR_Y
 
-from nira_cad.robot_nira import torso_layout
-from nira_cad.robot_nira.torso_layout import (
+from robot_nira import torso_layout
+from robot_nira.torso_layout import (
     SPACER_LENGTH_0_to_1, SPACER_LENGTH_1_to_2, SPACER_LENGTH_TOP,
 )
 

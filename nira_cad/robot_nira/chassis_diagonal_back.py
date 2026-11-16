@@ -6,11 +6,11 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import ExportDXF, Part, Pos, Rectangle, Rot, Sketch
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-from nira_cad.robot_nira import chassis_common
-import nira_cad.robot_nira.torso_common as torso_common
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+from robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import chassis_common
+import robot_nira.torso_common as torso_common
+from utils.colors import COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
 
 OLED_WIDTH = 23.0
@@ -51,7 +51,7 @@ def build_diagonal_plates(z_bottom: float, z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    from nira_cad.robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
+    from robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
 
     height = DIAGONAL_PLATE_HEIGHT
     dxf_dir = dxf_directory(chassis_common.THICKNESS)

@@ -4,8 +4,8 @@
 from pathlib import Path
 from shutil import copy2
 
-from nira_cad.robot_nira import EXPORT_DIR, assembly_complete, assembly_coxa, assembly_femur, assembly_tibia
-from nira_cad.robot_nira import assembly_torso_with_servos
+from robot_nira import EXPORT_DIR, assembly_complete, assembly_coxa, assembly_femur, assembly_tibia
+from robot_nira import assembly_torso_with_servos
 
 
 def main() -> None:

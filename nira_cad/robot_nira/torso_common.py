@@ -8,12 +8,12 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import math
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import EXPORT_DIR, dxf_directory
 from typing import NamedTuple
 
 from build123d import *
-from nira_cad.utils.ocp_utils import show
-from nira_cad.common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES, SERVO_FRONT_BRACKET_HOLES
+from utils.ocp_utils import show
+from common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES, SERVO_FRONT_BRACKET_HOLES
 
 THICKNESS = 1.5
 # Clear distance from the top of layer 2 to the underside of layer 3.

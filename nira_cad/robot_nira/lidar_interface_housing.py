@@ -17,17 +17,17 @@ from build123d import (
     Mode, Part, Plane, Polygon, Pos, Rectangle, Vector, insert, extrude,
 )
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-from nira_cad.robot_nira import board_ydlidar_tmini_interface as interface
-from nira_cad.robot_nira import lidar_ydlidar_tmini as lidar
-import nira_cad.robot_nira.torso_common as torso_common
-from nira_cad.robot_nira.chassis_common import (
+from robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import board_ydlidar_tmini_interface as interface
+from robot_nira import lidar_ydlidar_tmini as lidar
+import robot_nira.torso_common as torso_common
+from robot_nira.chassis_common import (
     RAIL_HEIGHT, SLOPE_COVER_SETBACK, SLOPE_END_X, SLOPE_START_X,
 )
-from nira_cad.robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LOW_RAIL_HEIGHT
-from nira_cad.utils import spacer
-from nira_cad.utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_TITAN_SILVER, COLOR_WINE_RED
-from nira_cad.utils.ocp_utils import show
+from robot_nira.lidar_layout import LIDAR_ASSEMBLY_X, LOW_RAIL_HEIGHT
+from utils import spacer
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_TITAN_SILVER, COLOR_WINE_RED
+from utils.ocp_utils import show
 
 WALL = 1.5
 CLEARANCE = 1.0

@@ -7,8 +7,8 @@ from unittest.mock import patch
 import ezdxf
 from ezdxf.bbox import extents
 from build123d import Face, extrude, import_step
-from nira_cad.robot_nira import dxf_directory, torso_common, torso_layer_3
-from nira_cad.robot_nira import torso_layer_4
+from robot_nira import dxf_directory, torso_common, torso_layer_3
+from robot_nira import torso_layer_4
 
 
 class NiraRoofTests(unittest.TestCase):

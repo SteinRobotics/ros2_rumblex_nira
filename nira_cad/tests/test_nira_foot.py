@@ -3,11 +3,11 @@
 import math
 import unittest
 from build123d import Box, Face, Pos
-from nira_cad.robot_nira import foot_back, foot_front
-from nira_cad.robot_nira import foot_outer
-from nira_cad.robot_nira import foot_common as layout
-from nira_cad.robot_nira.assembly_foot import build_assembly
-from nira_cad.robot_nira.assembly_tibia import build_assembly as build_tibia
+from robot_nira import foot_back, foot_front
+from robot_nira import foot_outer
+from robot_nira import foot_common as layout
+from robot_nira.assembly_foot import build_assembly
+from robot_nira.assembly_tibia import build_assembly as build_tibia
 
 
 class NiraFootTests(unittest.TestCase):

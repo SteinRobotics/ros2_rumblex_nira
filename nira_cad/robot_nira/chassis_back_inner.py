@@ -6,10 +6,10 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import Circle, ExportDXF, Part, Pos, Rectangle, Rot, Sketch, extrude, export_step
-from nira_cad.robot_nira import EXPORT_DIR, chassis_back, chassis_common, dxf_directory, torso_common, torso_layer_2_addon
-from nira_cad.robot_nira import torso_layout
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+from robot_nira import EXPORT_DIR, chassis_back, chassis_common, dxf_directory, torso_common, torso_layer_2_addon
+from robot_nira import torso_layout
+from utils.colors import COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
 THICKNESS = 3.0
 WIDTH = chassis_common.ROW_WIDTH

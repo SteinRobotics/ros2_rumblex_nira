@@ -2,10 +2,10 @@
 
 import unittest
 from build123d import Box, Cylinder, Pos, Rot
-from nira_cad.robot_nira import assembly_complete, assembly_coxa
-from nira_cad.robot_nira import assembly_head as head
-from nira_cad.robot_nira import webcam_obsbot
-from nira_cad.common import servo_feetech_hls3950m
+from robot_nira import assembly_complete, assembly_coxa
+from robot_nira import assembly_head as head
+from robot_nira import webcam_obsbot
+from common import servo_feetech_hls3950m
 
 
 class NiraHeadTests(unittest.TestCase):
@@ -118,7 +118,7 @@ class NiraHeadTests(unittest.TestCase):
         self.assertAlmostEqual((adapter & upper).volume, upper.volume)
 
     def test_mounted_cage_clears_lidar_scan_plane(self):
-        from nira_cad.robot_nira import (
+        from robot_nira import (
             assembly_torso_with_servos,
         )
 

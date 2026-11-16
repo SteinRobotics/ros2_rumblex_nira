@@ -40,8 +40,8 @@ from build123d import (
     extrude,
 )
 
-from nira_cad.utils.colors import COLOR_BRASS, COLOR_CREAMY_WHITE, COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+from utils.colors import COLOR_BRASS, COLOR_CREAMY_WHITE, COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
 
 BODY_WIDTH = 38.6

@@ -21,9 +21,9 @@ from build123d import (
     offset,
 )
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-import nira_cad.robot_nira.torso_layer_2_cover as torso_layer_2_cover
-from nira_cad.utils.ocp_utils import show
+from robot_nira import EXPORT_DIR, dxf_directory
+import robot_nira.torso_layer_2_cover as torso_layer_2_cover
+from utils.ocp_utils import show
 
 
 THICKNESS = 1.0

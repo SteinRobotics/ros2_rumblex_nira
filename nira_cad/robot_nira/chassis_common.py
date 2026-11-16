@@ -6,8 +6,8 @@ from build123d import (
     BuildPart, BuildSketch, Locations, Part, Rectangle, Sketch, insert, extrude,
 )
 
-import nira_cad.robot_nira.torso_common as torso_common
-from nira_cad.robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
+import robot_nira.torso_common as torso_common
+from robot_nira.lidar_layout import LOW_RAIL_HEIGHT, SHOULDER_TOP_X
 
 THICKNESS = torso_common.rectangle_slots_height
 FRONT_EXTENSION = 10.0

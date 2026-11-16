@@ -11,18 +11,18 @@ from build123d import (
     BuildPart, BuildSketch, Mode, Part, Plane, Polygon, Pos, insert,
     export_step, extrude,
 )
-import nira_cad.common.loudspeaker as loudspeaker
-import nira_cad.robot_nira.torso_common as torso_common
-import nira_cad.robot_nira.lidar_interface_housing as lidar_housing
-from nira_cad.robot_nira import EXPORT_DIR
-from nira_cad.robot_nira.chassis_common import (
+import common.loudspeaker as loudspeaker
+import robot_nira.torso_common as torso_common
+import robot_nira.lidar_interface_housing as lidar_housing
+from robot_nira import EXPORT_DIR
+from robot_nira.chassis_common import (
     RAIL_HEIGHT, SLOPE_COVER_DROP, SLOPE_COVER_END_X, SLOPE_COVER_SETBACK,
     SLOPE_END_X, SLOPE_START_X, THICKNESS,
     slope_finger_profiles,
 )
-from nira_cad.robot_nira.lidar_layout import LIDAR_Y, LOW_RAIL_HEIGHT
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+from robot_nira.lidar_layout import LIDAR_Y, LOW_RAIL_HEIGHT
+from utils.colors import COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
 SPEAKER_Y_POSITIONS = (25.0, -25.0)
 SPEAKER_OCTAGON_FLAT_SIZE = 4.0
@@ -146,7 +146,7 @@ def build_speakers(z_top: float) -> list[Part]:
 
 
 def main() -> None:
-    from nira_cad.robot_nira.torso_layout import LAYER_3_BOTTOM
+    from robot_nira.torso_layout import LAYER_3_BOTTOM
 
     z_top = LAYER_3_BOTTOM
     model = build_slope_cover(z_top)

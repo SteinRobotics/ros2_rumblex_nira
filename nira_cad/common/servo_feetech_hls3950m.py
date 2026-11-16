@@ -32,12 +32,12 @@ from build123d import (
     Axis,
 )
 
-from nira_cad.common.export_utils import GENERATED_DIR, export_common_part
+from common.export_utils import GENERATED_DIR, export_common_part
 
-from nira_cad.utils.geometry_utils import mirror_points_vertical_axis as mirror_y
-from nira_cad.utils.ocp_utils import show
+from utils.geometry_utils import mirror_points_vertical_axis as mirror_y
+from utils.ocp_utils import show
 
-from nira_cad.utils.colors import COLOR_DARK_GRAY
+from utils.colors import COLOR_DARK_GRAY
 
 # ── Outer-body dimensions (mm) ───────────────────────────────────────────────
 # Main rectangular case

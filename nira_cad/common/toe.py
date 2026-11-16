@@ -13,8 +13,8 @@ from pathlib import Path
 
 from build123d import BuildPart, Cone, Cylinder, Mode, Part
 
-from nira_cad.common.export_utils import export_common_part
-from nira_cad.utils.ocp_utils import show
+from common.export_utils import export_common_part
+from utils.ocp_utils import show
 
 LITTLE_TOE_DIAMETER = 10.0
 BIG_TOE_DIAMETER = 14.0

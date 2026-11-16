@@ -3,10 +3,10 @@
 import unittest
 from math import ceil
 from build123d import Circle, Face, Pos, Rectangle, Rot
-from nira_cad.boards import board_servo_plug as board
-from nira_cad.robot_nira import board_layout
-from nira_cad.robot_nira import torso_layer_0
-from nira_cad.robot_nira.assembly_torso_with_servos import place_board
+from boards import board_servo_plug as board
+from robot_nira import board_layout
+from robot_nira import torso_layer_0
+from robot_nira.assembly_torso_with_servos import place_board
 
 
 class ServoPlugBoardTests(unittest.TestCase):

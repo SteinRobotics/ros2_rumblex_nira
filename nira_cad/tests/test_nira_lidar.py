@@ -19,12 +19,12 @@ from build123d import (
     insert,
     extrude,
 )
-from nira_cad.robot_nira import chassis_common, chassis_diagonal_back, chassis_side, chassis_slope_cover, lidar_interface_housing, lidar_ydlidar_tmini, torso_common
-from nira_cad.robot_nira import (
+from robot_nira import chassis_common, chassis_diagonal_back, chassis_side, chassis_slope_cover, lidar_interface_housing, lidar_ydlidar_tmini, torso_common
+from robot_nira import (
     torso_layer_3,
 )
-from nira_cad.robot_nira.assembly_complete import build_assembly
-from nira_cad.robot_nira.lidar_layout import (
+from robot_nira.assembly_complete import build_assembly
+from robot_nira.lidar_layout import (
     CANOPY_HALF_WIDTH,
     CANOPY_SHOULDER_X,
     LIDAR_ASSEMBLY_X,
@@ -70,8 +70,8 @@ class NiraCanopyFrameTests(unittest.TestCase):
 class NiraSlopeCoverTests(unittest.TestCase):
 
     def test_extended_cover_seats_on_deck_with_matching_enclosed_side_joints(self):
-        from nira_cad.robot_nira import torso_layer_2
-        from nira_cad.robot_nira.torso_layout import (
+        from robot_nira import torso_layer_2
+        from robot_nira.torso_layout import (
             LAYER_1_BOTTOM,
             LAYER_2_BOTTOM,
             LAYER_2_TOP,
@@ -190,7 +190,7 @@ class NiraLidarHousingCutTests(unittest.TestCase):
             self.assertAlmostEqual((lid & rim).volume, rim.volume)
 
     def test_open_rear_tunnel_reaches_slope_and_clears_usb_cables(self):
-        from nira_cad.robot_nira.torso_layout import LAYER_2_TOP, LAYER_3_BOTTOM
+        from robot_nira.torso_layout import LAYER_2_TOP, LAYER_3_BOTTOM
 
         h = lidar_interface_housing
         housing = (
@@ -250,10 +250,10 @@ class NiraLidarHousingCutTests(unittest.TestCase):
 
     def test_two_foot_spacers_seat_on_deck_and_roof_with_aligned_bores(self):
         from itertools import combinations
-        from nira_cad.robot_nira import torso_layer_2
-        from nira_cad.robot_nira.torso_layout import LAYER_2_BOTTOM, LAYER_2_TOP, LAYER_3_BOTTOM
-        from nira_cad.utils import spacer
-        from nira_cad.utils.colors import COLOR_WINE_RED
+        from robot_nira import torso_layer_2
+        from robot_nira.torso_layout import LAYER_2_BOTTOM, LAYER_2_TOP, LAYER_3_BOTTOM
+        from utils import spacer
+        from utils.colors import COLOR_WINE_RED
 
         h = lidar_interface_housing
         posts = h.roof_spacers()
@@ -391,7 +391,7 @@ class NiraLidarTests(unittest.TestCase):
         cls.lidar = cls.parts["lidar_ydlidar_tmini"]
 
     def test_sensor_stack_clears_interface_board_in_front_third(self):
-        from nira_cad.utils.colors import COLOR_WINE_RED
+        from utils.colors import COLOR_WINE_RED
 
         deck = self.parts["torso_layer_2"]
         interface = self.parts["board_ydlidar_tmini_interface"]

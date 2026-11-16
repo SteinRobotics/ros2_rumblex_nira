@@ -16,12 +16,12 @@ from build123d import (
     Pos, Rectangle, Rot, Sketch, insert, export_step, extrude,
 )
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-from nira_cad.robot_nira.foot_common import (
+from robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira.foot_common import (
     THICKNESS, OUTER_PLATE_HEIGHT, OUTER_PLATE_Y, OUTER_TAB_WIDTH, OUTER_TAB_X,
 )
-from nira_cad.utils.colors import COLOR_CREAMY_WHITE
-from nira_cad.utils.ocp_utils import show
+from utils.colors import COLOR_CREAMY_WHITE
+from utils.ocp_utils import show
 
 
 def build_surface() -> Sketch:

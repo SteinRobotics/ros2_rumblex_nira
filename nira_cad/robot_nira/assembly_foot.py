@@ -7,21 +7,21 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step
 
-import nira_cad.robot_nira.foot_back as foot_back
-import nira_cad.robot_nira.foot_connection as foot_connection
-import nira_cad.robot_nira.foot_front as foot_front
-import nira_cad.utils.spacer as spacer
-from nira_cad.utils.spacer import FOOT_SPACER_OUTER_DIAMETER, FOOT_SPACER_STUD_HOLE_DIAMETER
-import nira_cad.common.toe as toe
-import nira_cad.robot_nira.foot_outer as foot_outer
-from nira_cad.robot_nira.foot_common import FOOT_SPACER_OVERALL_LENGTH
-from nira_cad.utils.ocp_utils import show
+import robot_nira.foot_back as foot_back
+import robot_nira.foot_connection as foot_connection
+import robot_nira.foot_front as foot_front
+import utils.spacer as spacer
+from utils.spacer import FOOT_SPACER_OUTER_DIAMETER, FOOT_SPACER_STUD_HOLE_DIAMETER
+import common.toe as toe
+import robot_nira.foot_outer as foot_outer
+from robot_nira.foot_common import FOOT_SPACER_OVERALL_LENGTH
+from utils.ocp_utils import show
 
-from nira_cad.utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_TITAN_SILVER
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_WINE_RED, COLOR_DARK_GRAY, COLOR_TITAN_SILVER
 
 
 TARGET_HOLE_X = foot_back.FOOT_MOUNT_HOLES[0]["x"]

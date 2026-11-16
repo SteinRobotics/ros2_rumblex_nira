@@ -3,6 +3,15 @@
 `robot_nira.py` and `robot_nira/` contain the complete robot assembly and its
 components. `boards/`, `common/` and `utils/` provide the helpers used by this model.
 Use a local `.venv` with build123d and the dependencies in `requirements-laser.txt`.
+
+Create and activate the environment from this directory:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-laser.txt
+source .venv/bin/activate
+```
+
 Imported vendor assets and generated exports are local, ignored files; obtain any
 required vendor geometry separately. Tracked runtime meshes remain in `../meshes/nira/`.
 

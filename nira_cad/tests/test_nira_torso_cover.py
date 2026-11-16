@@ -3,7 +3,7 @@
 import math
 import unittest
 from build123d import Face
-from nira_cad.robot_nira import torso_layer_2_cover as cover
+from robot_nira import torso_layer_2_cover as cover
 
 
 class NiraTorsoCoverTests(unittest.TestCase):

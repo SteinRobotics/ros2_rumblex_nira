@@ -24,8 +24,8 @@ import math
 from pathlib import Path
 from build123d import *
 
-from nira_cad.common.export_utils import export_common_part
-from nira_cad.utils.ocp_utils import show
+from common.export_utils import export_common_part
+from utils.ocp_utils import show
 
 # ---------------------------------------------------------------- params --
 PLATE_W = 41.0          # top plate overall width (X)

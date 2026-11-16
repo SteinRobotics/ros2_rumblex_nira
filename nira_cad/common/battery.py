@@ -31,9 +31,9 @@ from build123d import (
     fillet,
 )
 
-from nira_cad.common.export_utils import export_common_part
-from nira_cad.utils.colors import COLOR_GREEN
-from nira_cad.utils.ocp_utils import show
+from common.export_utils import export_common_part
+from utils.colors import COLOR_GREEN
+from utils.ocp_utils import show
 
 
 BODY_LENGTH = 74.0

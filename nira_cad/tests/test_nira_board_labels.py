@@ -5,8 +5,8 @@ import tempfile
 import unittest
 import ezdxf
 from build123d import ExportDXF
-from nira_cad.robot_nira import torso_layer_0
-from nira_cad.robot_nira.board_layout import BOARD_MOUNTS
+from robot_nira import torso_layer_0
+from robot_nira.board_layout import BOARD_MOUNTS
 
 
 class BoardLabelTests(unittest.TestCase):

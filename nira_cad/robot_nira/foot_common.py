@@ -23,10 +23,10 @@ from build123d import (
     extrude,
 )
 
-from nira_cad.common import servo_feetech_hls3950m
-from nira_cad.robot_nira.armor_style import gill_points
-from nira_cad.utils.colors import COLOR_RED
-from nira_cad.utils.ocp_utils import show
+from common import servo_feetech_hls3950m
+from robot_nira.armor_style import gill_points
+from utils.colors import COLOR_RED
+from utils.ocp_utils import show
 
 THICKNESS = 1.5
 M2_RADIUS = 1.0

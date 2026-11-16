@@ -1,6 +1,6 @@
 """Shared body mounting elevations and deck boundary, in millimetres."""
 
-from nira_cad.robot_nira import torso_common
+from robot_nira import torso_common
 
 SPACER_LENGTH_0_to_1 = 15.0
 SPACER_LENGTH_1_to_2 = 32.0

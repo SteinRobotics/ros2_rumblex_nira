@@ -7,7 +7,7 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import (
     BuildPart,
@@ -24,12 +24,12 @@ from build123d import (
     extrude,
 )
 
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
-from nira_cad.common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_BRACKET_HOLES
+from common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_BRACKET_HOLES
 
-from nira_cad.robot_nira.foot_common import THICKNESS, FOOT_MOUNT_HOLES
-from nira_cad.robot_nira.foot_common import build_surface as build_common_surface
+from robot_nira.foot_common import THICKNESS, FOOT_MOUNT_HOLES
+from robot_nira.foot_common import build_surface as build_common_surface
 
 
 def build_surface() -> Sketch:

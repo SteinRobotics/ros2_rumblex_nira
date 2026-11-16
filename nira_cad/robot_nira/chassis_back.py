@@ -6,12 +6,12 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import Circle, ExportDXF, Part, Pos, Sketch
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-from nira_cad.robot_nira import chassis_common
-import nira_cad.robot_nira.torso_common as torso_common
-from nira_cad.utils.ocp_utils import show
+from robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import chassis_common
+import robot_nira.torso_common as torso_common
+from utils.ocp_utils import show
 
-from nira_cad.robot_nira.torso_layout import (
+from robot_nira.torso_layout import (
      SPACER_LENGTH_1_to_2
 )
 
@@ -31,7 +31,7 @@ def build_model(height: float) -> Part:
 
 
 def main() -> None:
-    from nira_cad.robot_nira.torso_layout import SIDE_PLATE_HEIGHT
+    from robot_nira.torso_layout import SIDE_PLATE_HEIGHT
 
     height = SIDE_PLATE_HEIGHT
     surface = build_surface(height)

@@ -22,7 +22,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from build123d import *
 
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
 
 @dataclass

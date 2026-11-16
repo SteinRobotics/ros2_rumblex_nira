@@ -7,15 +7,15 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl, RigidJoint
 
 
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-import nira_cad.common.bracket_inclined as bracket_inclined
-import nira_cad.common.bracket_u_shape as bracket_u_shape
-from nira_cad.utils.ocp_utils import show
+from utils.colors import COLOR_DARK_GRAY
+import common.bracket_inclined as bracket_inclined
+import common.bracket_u_shape as bracket_u_shape
+from utils.ocp_utils import show
 
 def _center_xy_below(part, reference_bb):
     """Centre the bracket's top mounting face under the reference plate."""

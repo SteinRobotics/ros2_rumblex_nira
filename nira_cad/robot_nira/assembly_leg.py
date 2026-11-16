@@ -8,16 +8,16 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, export_step
 
-import nira_cad.robot_nira.assembly_coxa as assembly_coxa
-import nira_cad.robot_nira.assembly_femur as assembly_femur
-import nira_cad.robot_nira.assembly_tibia as assembly_tibia
-import nira_cad.common.servo_feetech_hls3950m as servo_feetech_hls3950m
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+import robot_nira.assembly_coxa as assembly_coxa
+import robot_nira.assembly_femur as assembly_femur
+import robot_nira.assembly_tibia as assembly_tibia
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
+from utils.colors import COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
 ANGLE_COXA = 0.0  # degrees
 # Display pose: extend the femur outward and turn the foot downward.

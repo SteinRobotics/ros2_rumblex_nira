@@ -63,10 +63,10 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     try:
-        from nira_cad.laser_cutting.geometry import make_profile
-        from nira_cad.laser_cutting.nesting import Settings, nest
-        from nira_cad.laser_cutting.output import write_job
-        from nira_cad.laser_cutting.robots import robot_components
+        from laser_cutting.geometry import make_profile
+        from laser_cutting.nesting import Settings, nest
+        from laser_cutting.output import write_job
+        from laser_cutting.robots import robot_components
 
         settings = Settings(
             width=args.sheet_width,

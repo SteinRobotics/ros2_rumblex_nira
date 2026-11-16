@@ -6,11 +6,11 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from build123d import *
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
-from nira_cad.utils.plate_with_holes import PlateConfig
-import nira_cad.utils.spacer as spacer
-from nira_cad.utils.colors import *
+from utils.plate_with_holes import PlateConfig
+import utils.spacer as spacer
+from utils.colors import *
 
 GRID_PITCH = 2.54
 PCB_THICKNESS = 1.6

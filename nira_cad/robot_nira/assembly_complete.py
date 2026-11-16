@@ -8,16 +8,16 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound
-from nira_cad.common.export_utils import export_stl_ignoring_degenerate_faces
+from common.export_utils import export_stl_ignoring_degenerate_faces
 
-import nira_cad.robot_nira.assembly_torso_with_servos as assembly_torso_with_servos
-import nira_cad.robot_nira.assembly_coxa as assembly_coxa
-import nira_cad.robot_nira.assembly_head as assembly_head
-import nira_cad.robot_nira.assembly_leg as assembly_leg
-from nira_cad.utils.ocp_utils import show
+import robot_nira.assembly_torso_with_servos as assembly_torso_with_servos
+import robot_nira.assembly_coxa as assembly_coxa
+import robot_nira.assembly_head as assembly_head
+import robot_nira.assembly_leg as assembly_leg
+from utils.ocp_utils import show
 from ocp_vscode import save_screenshot
 
 OCVSCODE_SCREENSHOT = True

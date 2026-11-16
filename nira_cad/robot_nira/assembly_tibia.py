@@ -7,19 +7,19 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl, RevoluteJoint
 
-from nira_cad.utils.colors import COLOR_DARK_GRAY
+from utils.colors import COLOR_DARK_GRAY
 
-import nira_cad.robot_nira.assembly_foot as assembly_foot
-import nira_cad.robot_nira.foot_common as foot_common
-import nira_cad.common.servo_feetech_hls3950m as servo_feetech_hls3950m
+import robot_nira.assembly_foot as assembly_foot
+import robot_nira.foot_common as foot_common
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
 
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
-from nira_cad.common.servo_feetech_hls3950m import build_model as build_servo
+from common.servo_feetech_hls3950m import build_model as build_servo
 
 # The foot extends along local X, unlike the femur's local Z length axis.
 TIBIA_ROLL = 180.0  # degrees about local X

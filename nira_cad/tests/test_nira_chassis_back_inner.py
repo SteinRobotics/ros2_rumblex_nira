@@ -3,8 +3,8 @@
 import math
 import unittest
 from build123d import GeomType
-from nira_cad.robot_nira import assembly_torso, chassis_back_inner
-from nira_cad.robot_nira import torso_layout
+from robot_nira import assembly_torso, chassis_back_inner
+from robot_nira import torso_layout
 
 
 class ChassisBackInnerTests(unittest.TestCase):

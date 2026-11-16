@@ -7,7 +7,7 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import (
     BuildPart, BuildSketch, Circle, Compound, ExportDXF, Locations, Mode,
@@ -15,13 +15,13 @@ from build123d import (
     RevoluteJoint, Rot, Vector, export_step, export_stl, extrude,
 )
 
-from nira_cad.utils.ocp_utils import show
-from nira_cad.utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED, COLOR_TITAN_SILVER
-from nira_cad.utils import spacer
-from nira_cad.robot_nira import webcam_obsbot
-import nira_cad.common.servo_feetech_hls3950m as servo_feetech_hls3950m
+from utils.ocp_utils import show
+from utils.colors import COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_WINE_RED, COLOR_TITAN_SILVER
+from utils import spacer
+from robot_nira import webcam_obsbot
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
 
-from nira_cad.robot_nira import vendor_brackets
+from robot_nira import vendor_brackets
 
 # Pod coordinates: X across the face, -Y forward, Z up, as in the webcam.
 # The frame's origin is on the adapter's rear face, aligned to the bracket centre.

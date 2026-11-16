@@ -30,11 +30,11 @@ from build123d import (
     export_step, export_stl, extrude, loft,
 )
 
-from nira_cad.robot_nira import EXPORT_DIR
-from nira_cad.utils.colors import (
+from robot_nira import EXPORT_DIR
+from utils.colors import (
     COLOR_BRASS, COLOR_CREAMY_WHITE, COLOR_DARK_GRAY, COLOR_TITAN_SILVER,
 )
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
 # Photo-derived placeholders, not manufacturer specifications.
 BASE_WIDTH = 48.0

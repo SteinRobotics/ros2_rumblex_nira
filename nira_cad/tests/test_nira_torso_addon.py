@@ -2,8 +2,8 @@
 
 import unittest
 from build123d import Face, offset
-from nira_cad.robot_nira import torso_layer_2
-from nira_cad.robot_nira import torso_layer_2_addon as addon
+from robot_nira import torso_layer_2
+from robot_nira import torso_layer_2_addon as addon
 
 
 class NiraTorsoAddonTests(unittest.TestCase):

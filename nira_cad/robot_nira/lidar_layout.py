@@ -6,7 +6,7 @@ scan sector; the canopy itself sits above the complete scanner envelope.
 """
 
 from build123d import BuildSketch, Polygon, Sketch
-from nira_cad.robot_nira import torso_common
+from robot_nira import torso_common
 
 LIDAR_X = 80.0
 LIDAR_Y = 0.0

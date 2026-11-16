@@ -11,7 +11,7 @@ from pathlib import Path
 
 from build123d import BuildPart, Cylinder, Mode, Part, export_step, export_stl
 
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
 FOOT_SPACER_OUTER_DIAMETER = 4.0
 FOOT_SPACER_OVERALL_LENGTH = 32.0

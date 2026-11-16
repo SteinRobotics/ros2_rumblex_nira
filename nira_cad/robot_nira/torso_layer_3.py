@@ -8,7 +8,7 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import EXPORT_DIR, dxf_directory
 
 from build123d import (
     BuildPart,
@@ -26,9 +26,9 @@ from build123d import (
     extrude,
 )
 
-import nira_cad.robot_nira.torso_common as torso_common
-from nira_cad.robot_nira.lidar_layout import CANOPY_SHOULDER_X, REAR_X, canopy_surface
-from nira_cad.utils.ocp_utils import show
+import robot_nira.torso_common as torso_common
+from robot_nira.lidar_layout import CANOPY_SHOULDER_X, REAR_X, canopy_surface
+from utils.ocp_utils import show
 
 
 FRONT_RAIL_WIDTH = 5.0

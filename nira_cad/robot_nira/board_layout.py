@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from typing import Callable
 from types import ModuleType
 
-import nira_cad.boards.board_rpi5 as board_rpi5
-import nira_cad.boards.board_servo_plug as board_servo_plug
-import nira_cad.boards.board_relay as board_relay
-import nira_cad.boards.board_ina228 as board_ina228
-import nira_cad.boards.board_bno055 as board_bno055
-import nira_cad.boards.board_servo_interface as board_servo_interface
-import nira_cad.boards.board_i2c_distributor as board_i2c_distributor
+import boards.board_rpi5 as board_rpi5
+import boards.board_servo_plug as board_servo_plug
+import boards.board_relay as board_relay
+import boards.board_ina228 as board_ina228
+import boards.board_bno055 as board_bno055
+import boards.board_servo_interface as board_servo_interface
+import boards.board_i2c_distributor as board_i2c_distributor
 
 @dataclass(frozen=True)
 class Placement:

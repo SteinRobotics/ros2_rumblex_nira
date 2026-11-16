@@ -7,17 +7,17 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR
+from robot_nira import EXPORT_DIR
 
 from build123d import Compound, Pos, Rot, export_step, export_stl, RevoluteJoint, RigidJoint
 
 
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-import nira_cad.common.servo_feetech_hls3950m as servo_feetech_hls3950m
-import nira_cad.common.bracket_inclined as bracket_inclined
-from nira_cad.utils.ocp_utils import show
+from utils.colors import COLOR_DARK_GRAY
+import common.servo_feetech_hls3950m as servo_feetech_hls3950m
+import common.bracket_inclined as bracket_inclined
+from utils.ocp_utils import show
 
-from nira_cad.robot_nira import vendor_brackets
+from robot_nira import vendor_brackets
 
 # Turn the femur over about its length, keeping both horns seated in the coxa.
 FEMUR_ROLL = 180.0  # degrees about local Z

@@ -55,8 +55,8 @@ nira_communication/soundfiles/
 nira_communication/tts_cache/
 nira_communication/keys/
 nira_communication/models/
-nira_description/cad/imported/
-nira_description/cad/generated/
+nira_cad/imported/
+nira_cad/generated/
 
 build/
 log/

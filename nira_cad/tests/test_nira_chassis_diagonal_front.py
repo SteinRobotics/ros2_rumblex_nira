@@ -2,11 +2,11 @@
 
 import unittest
 from build123d import Box, Pos
-from nira_cad.robot_nira import chassis_common, chassis_diagonal_back, chassis_diagonal_front, torso_common
-from nira_cad.robot_nira import (
+from robot_nira import chassis_common, chassis_diagonal_back, chassis_diagonal_front, torso_common
+from robot_nira import (
     torso_layer_2,
 )
-from nira_cad.robot_nira.torso_layout import (
+from robot_nira.torso_layout import (
     DIAGONAL_PLATE_HEIGHT,
     LAYER_2_BOTTOM,
     LAYER_3_BOTTOM,

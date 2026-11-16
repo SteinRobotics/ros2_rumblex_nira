@@ -2,7 +2,7 @@
 
 import unittest
 from build123d import Box, Cylinder, Pos
-from nira_cad.robot_nira.lidar_ydlidar_tmini import build_model
+from robot_nira.lidar_ydlidar_tmini import build_model
 
 
 class TminiMountTests(unittest.TestCase):

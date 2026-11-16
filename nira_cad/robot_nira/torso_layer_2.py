@@ -7,16 +7,16 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-from nira_cad.robot_nira.torso_layout import FRONT_DECK_X
+from robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira.torso_layout import FRONT_DECK_X
 from build123d import *
 from build123d import ColorIndex
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
-import nira_cad.robot_nira.torso_common as torso_common
-import nira_cad.robot_nira.torso_layer_2_addon as torso_layer_2_addon
-from nira_cad.robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X, LIDAR_Y
-from nira_cad.robot_nira.lidar_interface_housing import (
+import robot_nira.torso_common as torso_common
+import robot_nira.torso_layer_2_addon as torso_layer_2_addon
+from robot_nira.lidar_layout import LIDAR_X, LIDAR_ASSEMBLY_X, LIDAR_Y
+from robot_nira.lidar_interface_housing import (
     DECK_TAB_POSITIONS, DECK_TAB_WIDTH, WALL, SPACER_POSITIONS, SPACER_INNER_DIAMETER,
 )
 

@@ -40,9 +40,9 @@ from build123d import (
     extrude,
 )
 
-from nira_cad.robot_nira import EXPORT_DIR
-from nira_cad.utils.colors import COLOR_DARK_GRAY
-from nira_cad.utils.ocp_utils import show
+from robot_nira import EXPORT_DIR
+from utils.colors import COLOR_DARK_GRAY
+from utils.ocp_utils import show
 
 
 BODY_WIDTH = 26.5

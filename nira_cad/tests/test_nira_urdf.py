@@ -17,10 +17,10 @@ spec = importlib.util.spec_from_file_location(
 )
 description = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(description)
-from nira_cad.robot_nira import assembly_coxa, assembly_femur, assembly_head, assembly_torso_with_servos
-from nira_cad.robot_nira import assembly_tibia
-from nira_cad.robot_nira import torso_common
-from nira_cad.common import servo_feetech_hls3950m
+from robot_nira import assembly_coxa, assembly_femur, assembly_head, assembly_torso_with_servos
+from robot_nira import assembly_tibia
+from robot_nira import torso_common
+from common import servo_feetech_hls3950m
 
 
 def transform(element):

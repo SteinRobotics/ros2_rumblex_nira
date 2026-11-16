@@ -7,11 +7,11 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import EXPORT_DIR, dxf_directory
 from build123d import *
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
-import nira_cad.robot_nira.torso_common as torso_common
+import robot_nira.torso_common as torso_common
 
 def build_surface() -> Sketch:
     with BuildSketch() as sketch:

@@ -7,8 +7,8 @@ if __package__ in (None, ""):
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
-from nira_cad.robot_nira import foot_common
+from robot_nira import EXPORT_DIR, dxf_directory
+from robot_nira import foot_common
 
 from build123d import (
     BuildPart,
@@ -25,7 +25,7 @@ from build123d import (
     extrude,
 )
 
-from nira_cad.utils.ocp_utils import show
+from utils.ocp_utils import show
 
 THICKNESS = 3.0
 
