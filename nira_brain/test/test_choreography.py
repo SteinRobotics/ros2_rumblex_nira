@@ -59,6 +59,7 @@ class ChoreographyTest(unittest.TestCase):
 
     def test_metal_sections_contacts_and_return(self):
         self.assertEqual(metal.build().to_yaml(), (PACKAGE / 'config/sequences/dance_metal.yaml').read_text())
+        self.assertEqual(metal.build().actions[0]['music'], metal.SONG)
         self.assertEqual(metal.build().summary(), (122, 50.5))
         for bpm, amplitude in ((60, 0.5), (120, 1), (140, 1)):
             stage = metal.make_stage(bpm, amplitude)
@@ -78,6 +79,8 @@ class ChoreographyTest(unittest.TestCase):
                 self.assertTrue(sequence.actions[0]['movement']['save_pose'])
                 self.assertTrue(sequence.actions[-1]['movement']['restore_pose'])
                 self.assertIn('Warnings:\n  none', stage.report(name))
+                self.assertTrue(all('music' not in action
+                                    for action in metal.build(bpm, amplitude, name).actions))
         for kwargs in ({'bpm': 141}, {'bpm': 0}, {'amplitude': 1.1}, {'amplitude': float('nan')}):
             with self.assertRaises(ValueError):
                 metal.build(**kwargs)

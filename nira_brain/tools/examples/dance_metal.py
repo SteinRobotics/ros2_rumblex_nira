@@ -7,6 +7,8 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from sequence_generator import Stage, pose, positive
 
+SONG = 'lovemusic_ai__Iron_Star_March.mp3'
+
 
 def chug(stage, side):
     """Uneven three-hit riff: short punches separated by heavier rebounds."""
@@ -118,7 +120,10 @@ def make_stage(bpm=120, amplitude=1.0):
 
 
 def build(bpm=120, amplitude=1.0, section=None):
-    return make_stage(bpm, amplitude).sequence('dance_metal', section)
+    sequence = make_stage(bpm, amplitude).sequence('dance_metal', section)
+    if section is None:
+        sequence.actions[0] = {'music': SONG, **sequence.actions[0]}
+    return sequence
 
 
 def main():
@@ -136,7 +141,7 @@ def main():
         if args.list_sections:
             print('\n'.join(stage.sections))
             return
-        sequence = stage.sequence('dance_metal', args.section)
+        sequence = build(args.bpm, args.amplitude, args.section)
         if args.report:
             print(stage.report(args.section), file=sys.stderr)
         if args.output:
