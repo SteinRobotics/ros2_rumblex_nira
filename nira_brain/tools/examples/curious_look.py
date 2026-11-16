@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from choreography import Sequence, hold, pose, positive, repeat
+from sequence_generator import Sequence, hold, pose, positive, repeat
 
 
 def curious_phrase(amplitude=1.0, direction='left', pause_s=1.2):

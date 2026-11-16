@@ -33,7 +33,7 @@ setup(
     zip_safe=True,
     maintainer='Christian Stein',
     maintainer_email='stein.robotics@gmail.com',
-    description='Speech recognition, TTS, and audio I/O for the RumbleX hexapod platform',
+    description='Speech recognition, TTS, and audio I/O for the Nira hexapod',
     license='MIT',
     extras_require={'test': ['pytest', 'onnx']},
     entry_points={

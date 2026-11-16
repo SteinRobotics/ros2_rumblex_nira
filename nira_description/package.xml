@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_description</name>
   <version>0.1.0</version>
-  <description>URDF/XACRO robot description for the RumbleX hexapod platform</description>
+  <description>URDF/XACRO robot description for the Nira hexapod</description>
   <maintainer email="christian@todo.todo">Christian Stein</maintainer>
   <license>MIT</license>
 

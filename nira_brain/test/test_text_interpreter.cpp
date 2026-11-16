@@ -66,19 +66,7 @@ TEST_F(TextInterpreterTest, CommandLaydown) {
     EXPECT_EQ(command, "commandLaydown");
 }
 
-class RobotTextInterpreterTest : public TextInterpreterTest,
-                                 public ::testing::WithParamInterface<std::string> {
-   protected:
-    void SetUp() override {
-        rclcpp::init(0, nullptr);
-        rclcpp::NodeOptions options;
-        options.parameter_overrides({rclcpp::Parameter("robot", GetParam())});
-        node_ = std::make_shared<rclcpp::Node>("test_robot_text_interpreter", options);
-        interpreter_ = std::make_unique<CTextInterpreter>(node_);
-    }
-};
-
-TEST_P(RobotTextInterpreterTest, RetainsCommonCommands) {
+TEST_F(TextInterpreterTest, RecognizesMovementAndMusicCommands) {
     for (const auto& [phrase, command] :
          std::vector<std::pair<std::string, std::string>>{{"sieh nach links", "commandLookLeft"},
                                                           {"steh auf", "commandStandup"},
@@ -90,7 +78,7 @@ TEST_P(RobotTextInterpreterTest, RetainsCommonCommands) {
     }
 }
 
-TEST_P(RobotTextInterpreterTest, SensorCommandsMatchRobot) {
+TEST_F(TextInterpreterTest, RecognizesNiraSensorCommands) {
     for (const auto& [phrase, command] :
          std::vector<std::pair<std::string, std::string>>{{"aktiviere lidar", "commandLidarOn"},
                                                           {"deaktiviere laserscanner", "commandLidarOff"},
@@ -101,10 +89,8 @@ TEST_P(RobotTextInterpreterTest, SensorCommandsMatchRobot) {
     }
 }
 
-TEST_P(RobotTextInterpreterTest, AcceptsAlreadyDeclaredRobotParameter) {
+TEST_F(TextInterpreterTest, CanConstructAnotherInterpreter) {
     CTextInterpreter second_interpreter(node_);
     std::string text = "aktiviere lidar";
     EXPECT_EQ(second_interpreter.searchInterpretation(second_interpreter.parseText(text)), "commandLidarOn");
 }
-
-INSTANTIATE_TEST_SUITE_P(Robots, RobotTextInterpreterTest, ::testing::Values("nira"));

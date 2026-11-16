@@ -7,9 +7,8 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    robot = "nira"
     config = PathJoinSubstitution(
-        [get_package_share_directory("nira_brain"), "config", robot, "parameter.yaml"]
+        [get_package_share_directory("nira_brain"), "config", "nira", "parameter.yaml"]
     )
     node = Node(
         package="nira_brain",
@@ -22,7 +21,7 @@ def generate_launch_description():
                 [
                     get_package_share_directory("nira_brain"),
                     "config",
-                    robot,
+                    "nira",
                     "gait.yaml",
                 ]
             ),
@@ -30,7 +29,7 @@ def generate_launch_description():
                 [
                     get_package_share_directory("nira_description"),
                     "config",
-                    robot,
+                    "nira",
                     "anatomy.yaml",
                 ]
             ),

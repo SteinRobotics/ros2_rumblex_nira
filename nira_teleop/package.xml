@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_teleop</name>
   <version>0.0.1</version>
-  <description>Teleoperation (joystick, remote control) for the RumbleX hexapod platform</description>
+  <description>Teleoperation (joystick, remote control) for the Nira hexapod</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 

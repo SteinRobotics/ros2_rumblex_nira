@@ -106,6 +106,3 @@ class CSimpleTimer {
 };
 
 }  // namespace utils
-
-// Backward-compat: keep un-namespaced alias for now
-using CSimpleTimer = utils::CSimpleTimer;

@@ -111,7 +111,7 @@ loads its servo description. Nira uses its own configuration.
 
 The coordinator requires `max_velocity_linear`, `max_velocity_rotation`,
 `body_factor_height`, `joystick_deadzone`, `min_body_height`, and `max_body_height`
-from the robot profile. Values must be finite, velocity limits positive, the
+from Nira’s configuration. Values must be finite, velocity limits positive, the
 height factor nonnegative, the deadzone in `[0, 1)`, and height limits bracket zero.
 Movement-request locks expire in the coordinator update loop using steady wall
 time, independently of paused simulation time. New timed requests replace the
@@ -176,12 +176,11 @@ explicit sequence stop cannot be undone by a stale velocity command.
 
 Velocity inputs use metres/second for planar translation and radians/second for
 yaw. Joystick inputs are normalized; full stick maps to `max_velocity_linear`
-(default 0.10 m/s in both robot profiles) or `max_velocity_rotation` (0.40 rad/s,
+(default 0.10 m/s) or `max_velocity_rotation` (0.40 rad/s,
 about 23 degrees/s).
 All velocity requests are limited by planar vector magnitude and yaw magnitude;
 non-finite requests are rejected. Linear direction is preserved when limiting.
-The authoritative limits also drive gait selection. Legacy
-`gait.move_combined.max_*_velocity_*` aliases must match them when supplied.
+The authoritative limits also drive gait selection.
 
 Gait demand is the larger of normalized planar speed and normalized yaw speed.
 The wave/ripple and ripple/tripod thresholds remain 0.3 and 0.6, with hysteresis.

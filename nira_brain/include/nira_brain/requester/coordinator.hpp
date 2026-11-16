@@ -13,8 +13,8 @@
 #include "nira_interfaces/msg/servo_status.hpp"
 //
 #include <chrono>
-#include <optional>
 #include <nira_utils/simpletimer.hpp>
+#include <optional>
 
 #include "action/action_planner.hpp"
 #include "irequester.hpp"
@@ -86,8 +86,8 @@ class CCoordinator {
     std::shared_ptr<CErrorManagement> errorManagement_;
     std::shared_ptr<CTextInterpreter> textInterpreter_;
     std::shared_ptr<CSequenceParser> sequenceParser_;
-    std::shared_ptr<CSimpleTimer> timerErrorRequest_;
-    std::shared_ptr<CSimpleTimer> timerNoRequest_;
+    std::shared_ptr<utils::CSimpleTimer> timerErrorRequest_;
+    std::shared_ptr<utils::CSimpleTimer> timerNoRequest_;
     struct MovementDeadline {
         std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> time;
         uint32_t movement_type;

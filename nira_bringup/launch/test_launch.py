@@ -82,7 +82,6 @@ def _face_preview(context):
 
 
 def generate_launch_description():
-    robot = "nira"
     teleop = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [FindPackageShare("nira_teleop"), "/launch/teleop_simulated_launch.py"]
@@ -146,7 +145,7 @@ def generate_launch_description():
         ],
     )
     anatomy = PathJoinSubstitution(
-        [FindPackageShare("nira_description"), "config", robot, "anatomy.yaml"]
+        [FindPackageShare("nira_description"), "config", "nira", "anatomy.yaml"]
     )
     return LaunchDescription(
         [

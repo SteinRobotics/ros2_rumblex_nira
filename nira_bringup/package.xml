@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_bringup</name>
   <version>0.0.1</version>
-  <description>Launch files and bringup configuration for the RumbleX hexapod platform</description>
+  <description>Launch files and bringup configuration for the Nira hexapod</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 

@@ -1,4 +1,4 @@
-"""Run the test stack with the Gazebo mesh robot, physical map walls and furniture."""
+"""Run the test stack with the Gazebo mesh "nira", physical map walls and furniture."""
 
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -17,11 +17,10 @@ import yaml
 
 
 def _joint_bridge(context):
-    robot = "nira"
     config = os.path.join(
         get_package_share_directory("nira_gazebo"),
         "config",
-        robot,
+        "nira",
         "joint_controllers.yaml",
     )
     with open(config) as stream:
@@ -40,7 +39,6 @@ def _joint_bridge(context):
 
 
 def generate_launch_description():
-    robot = "nira"
     return LaunchDescription(
         [
             DeclareLaunchArgument("start_x", default_value="-2.26"),

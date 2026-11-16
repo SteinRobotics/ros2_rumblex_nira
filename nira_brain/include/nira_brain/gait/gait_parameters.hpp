@@ -148,15 +148,6 @@ inline Parameters Parameters::declare(std::shared_ptr<rclcpp::Node> node) {
         node->declare_parameter<double>("gait.move_combined.hysteresis_margin", 0.05);
     params.move_combined.max_linear_velocity = velocityLimit<m / s>(node, "max_velocity_linear");
     params.move_combined.max_angular_velocity = velocityLimit<rad / s>(node, "max_velocity_rotation");
-    for (const auto& [name, limit] :
-         {std::pair{"gait.move_combined.max_linear_velocity_m_s",
-                    params.move_combined.max_linear_velocity.numerical_value_in(m / s)},
-          std::pair{"gait.move_combined.max_angular_velocity_rad_s",
-                    params.move_combined.max_angular_velocity.numerical_value_in(rad / s)}}) {
-        const double alias = node->declare_parameter<double>(name, limit);
-        if (!std::isfinite(alias) || std::abs(alias - limit) > 1e-12)
-            throw std::invalid_argument(std::string(name) + " must match the authoritative velocity limit");
-    }
     const auto& combined = params.move_combined;
     if (!(std::isfinite(combined.velocity_threshold_wave_ripple) &&
           std::isfinite(combined.velocity_threshold_ripple_tripod) &&

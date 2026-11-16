@@ -6,12 +6,11 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    robot = "nira"
     config = PathJoinSubstitution(
         [
             get_package_share_directory("nira_communication"),
             "config",
-            robot,
+            "nira",
             "params.yaml",
         ]
     )

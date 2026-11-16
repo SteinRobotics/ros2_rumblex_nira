@@ -18,9 +18,8 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    robot = "nira"
     model = PathJoinSubstitution(
-        [FindPackageShare("nira_description"), "urdf", [robot, "_mesh.urdf.xacro"]]
+        [FindPackageShare("nira_description"), "urdf", "nira_mesh.urdf.xacro"]
     )
     robot_state = Node(
         package="robot_state_publisher",
@@ -71,7 +70,7 @@ def generate_launch_description():
         }.items(),
     )
     bno055_config = PathJoinSubstitution(
-        [FindPackageShare("nira_bringup"), "config", robot, "bno055_params.yaml"]
+        [FindPackageShare("nira_bringup"), "config", "nira", "bno055_params.yaml"]
     )
     bno055 = Node(
         package="bno055",
@@ -110,12 +109,12 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "enable_navigation",
                 default_value="false",
-                description="Launch nira_navigation (robot-specific sensing + reactive nav)",
+                description="Launch nira_navigation (Nira sensing + reactive nav)",
             ),
             DeclareLaunchArgument(
                 "enable_camera",
                 default_value="false",
-                description="Enable the head camera for robots with a camera profile",
+                description="Enable Nira's head camera",
             ),
             DeclareLaunchArgument("camera_device", default_value=""),
             DeclareLaunchArgument("camera_params_file", default_value=""),

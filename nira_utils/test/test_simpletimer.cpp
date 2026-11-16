@@ -6,7 +6,7 @@
 #include <thread>
 
 TEST(SimpleTimerTest, GetSecondsElapsedReportsCorrectTime) {
-    CSimpleTimer timer;
+    utils::CSimpleTimer timer;
     timer.start();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -20,7 +20,7 @@ TEST(SimpleTimerTest, GetSecondsElapsedReportsCorrectTime) {
 }
 
 TEST(SimpleTimerTest, HaveSecondsElapsedWorksCorrectly) {
-    CSimpleTimer timer;
+    utils::CSimpleTimer timer;
     timer.start();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(300));

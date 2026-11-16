@@ -20,7 +20,7 @@ variables:
   kLegLiftHeight: 0.02  # m
   kLegLowerHeight: -0.05  # m
 
-  # SEQUENCE_STAND_UP targets; toe positions match both robots' anatomy.yaml.
+  # SEQUENCE_STAND_UP targets; toe positions match Nira's anatomy.yaml.
   # Absolute targets before the torso transformation, not pose deltas.
   kStandingDuration: 1.5  # s; standup.yaml transition duration
   kStandingTorsoPose:

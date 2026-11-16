@@ -1,62 +1,11 @@
-"""Select sensor drivers and optional processing from the robot profile."""
+"""Launch Nira's lidar and optional head camera."""
 
-from pathlib import Path
-import re
-import yaml
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (
-    DeclareLaunchArgument,
-    IncludeLaunchDescription,
-    OpaqueFunction,
-)
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
-
-
-def _launch_sensors(context):
-    robot = "nira"
-    profile = (
-        Path(get_package_share_directory("nira_bringup"))
-        / "config"
-        / robot
-        / "sensors.yaml"
-    )
-    if not profile.is_file():
-        raise RuntimeError(f"No sensor profile for robot {robot!r}: {profile}")
-    config = yaml.safe_load(profile.read_text())
-    driver = (
-        Path(get_package_share_directory(config["lidar_package"]))
-        / "launch"
-        / "lidar_launch.py"
-    )
-    actions = [
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(str(driver)),
-            launch_arguments={}.items(),
-            condition=IfCondition(LaunchConfiguration("enable_driver")),
-        )
-    ]
-    if config.get("camera_package") and IfCondition(
-        LaunchConfiguration("enable_camera")
-    ).evaluate(context):
-        camera = (
-            Path(get_package_share_directory(config["camera_package"]))
-            / "launch"
-            / "camera_launch.py"
-        )
-        actions.append(
-            IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(str(camera)),
-                launch_arguments={
-                    "video_device": LaunchConfiguration("camera_device"),
-                    "params_file": LaunchConfiguration("camera_params_file"),
-                    "camera_info_url": LaunchConfiguration("camera_info_url"),
-                }.items(),
-            )
-        )
-    return actions
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -66,11 +15,31 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "enable_camera",
                 default_value="false",
-                description="Enable the camera when the robot profile provides one",
+                description="Enable Nira's head camera",
             ),
             DeclareLaunchArgument("camera_device", default_value=""),
             DeclareLaunchArgument("camera_params_file", default_value=""),
             DeclareLaunchArgument("camera_info_url", default_value=""),
-            OpaqueFunction(function=_launch_sensors),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution(
+                        [FindPackageShare("nira_lidar_2d"), "launch", "lidar_launch.py"]
+                    )
+                ),
+                condition=IfCondition(LaunchConfiguration("enable_driver")),
+            ),
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution(
+                        [FindPackageShare("nira_camera"), "launch", "camera_launch.py"]
+                    )
+                ),
+                launch_arguments={
+                    "video_device": LaunchConfiguration("camera_device"),
+                    "params_file": LaunchConfiguration("camera_params_file"),
+                    "camera_info_url": LaunchConfiguration("camera_info_url"),
+                }.items(),
+                condition=IfCondition(LaunchConfiguration("enable_camera")),
+            ),
         ]
     )

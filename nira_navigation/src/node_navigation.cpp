@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2026 Christian Stein
  *
- * Simple reactive navigation for a RumbleX robot.
+ * Simple reactive navigation for a Nira robot.
  *
  * Accepts 2D goal poses from RViz ("2D Nav Goal" → /goal_pose) and drives the
  * robot toward the goal while avoiding obstacles detected by the head-sweep

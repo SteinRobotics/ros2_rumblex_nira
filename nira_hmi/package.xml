@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_hmi</name>
   <version>0.0.0</version>
-  <description>Human-machine interface (OLED display, relay control, power monitoring) for the RumbleX hexapod platform</description>
+  <description>Human-machine interface (OLED display, relay control, power monitoring) for the Nira hexapod</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 

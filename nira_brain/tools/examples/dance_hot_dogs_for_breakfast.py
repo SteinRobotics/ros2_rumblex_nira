@@ -7,7 +7,7 @@ import sys
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from choreography import Stage, pose
+from sequence_generator import Stage, pose
 
 PHRASE_S = 1.752
 SUBDIVISION_S = PHRASE_S / 4

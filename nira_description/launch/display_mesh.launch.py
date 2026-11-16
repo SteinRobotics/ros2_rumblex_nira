@@ -1,22 +1,20 @@
-"""Display a RumbleX mesh model in RViz."""
+"""Display a Nira mesh model in RViz."""
 
 import os
-import re
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import xacro
 
 
-def _launch_robot(context):
-    robot = "nira"
+def _launch_nodes():
     share = get_package_share_directory("nira_description")
-    xacro_file = os.path.join(share, "urdf", f"{robot}_mesh.urdf.xacro")
+    xacro_file = os.path.join(share, "urdf", "nira_mesh.urdf.xacro")
     if not os.path.isfile(xacro_file):
-        raise RuntimeError(f"Robot profile {robot!r} has no mesh model: {xacro_file}")
+        raise RuntimeError(f"Nira has no mesh model: {xacro_file}")
     description = xacro.process_file(xacro_file, mappings={"use_sim": "false"}).toxml()
     return [
         Node(
@@ -67,6 +65,6 @@ def generate_launch_description():
                 default_value="true",
                 description="Show sliders for manually setting joint angles",
             ),
-            OpaqueFunction(function=_launch_robot),
+            *_launch_nodes(),
         ]
     )

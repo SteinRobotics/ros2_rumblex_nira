@@ -88,6 +88,3 @@ class CCallbackTimer {
 };
 
 }  // namespace utils
-
-// Backward-compat: keep un-namespaced alias for now
-using CCallbackTimer = utils::CCallbackTimer;

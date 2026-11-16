@@ -2,7 +2,7 @@
 <package format="3">
   <name>nira_camera</name>
   <version>0.0.1</version>
-  <description>Head camera capture and standard camera controls for RumbleX</description>
+  <description>Head camera capture and standard camera controls for Nira</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>

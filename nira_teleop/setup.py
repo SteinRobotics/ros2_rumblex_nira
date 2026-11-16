@@ -17,7 +17,7 @@ setup(
     zip_safe=True,
     maintainer='Christian Stein',
     maintainer_email='stein.robotics@gmail.com',
-    description='Teleoperation (joystick, remote control) for the RumbleX hexapod platform',
+    description='Teleoperation (joystick, remote control) for the Nira hexapod',
     license='MIT',
     extras_require={'test': ['pytest']},
     entry_points={

@@ -1,11 +1,8 @@
-"""Display a RumbleX robot model in RViz with joint controls."""
+"""Display a Nira robot model in RViz with joint controls."""
 
 import os
-import re
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import xacro
 
@@ -22,12 +19,11 @@ _SNAP_GUI_OVERRIDES = {
 }
 
 
-def _launch_robot(context):
-    robot = "nira"
+def _launch_nodes():
     share = get_package_share_directory("nira_description")
-    xacro_file = os.path.join(share, "urdf", f"{robot}.urdf.xacro")
+    xacro_file = os.path.join(share, "urdf", "nira.urdf.xacro")
     if not os.path.isfile(xacro_file):
-        raise RuntimeError(f"Robot profile {robot!r} has no model: {xacro_file}")
+        raise RuntimeError(f"Nira has no model: {xacro_file}")
     description = xacro.process_file(xacro_file, mappings={"use_sim": "false"}).toxml()
     return [
         Node(
@@ -57,4 +53,4 @@ def _launch_robot(context):
 
 
 def generate_launch_description():
-    return LaunchDescription([OpaqueFunction(function=_launch_robot)])
+    return LaunchDescription(_launch_nodes())

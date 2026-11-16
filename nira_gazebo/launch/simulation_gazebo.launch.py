@@ -1,13 +1,11 @@
-"""Launch Gazebo Harmonic simulation of a RumbleX robot with ros2_control."""
+"""Launch Gazebo Harmonic simulation of a Nira robot with ros2_control."""
 
 import os
-import re
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
-    OpaqueFunction,
     RegisterEventHandler,
     TimerAction,
 )
@@ -21,13 +19,12 @@ import xacro
 import yaml
 
 
-def _launch_robot(context):
-    robot = "nira"
+def _launch_nodes():
     pkg_description = get_package_share_directory("nira_description")
     pkg_gazebo = get_package_share_directory("nira_gazebo")
-    xacro_file = os.path.join(pkg_description, "urdf", f"{robot}.urdf.xacro")
+    xacro_file = os.path.join(pkg_description, "urdf", "nira.urdf.xacro")
     if not os.path.isfile(xacro_file):
-        raise RuntimeError(f"Robot profile {robot!r} has no model: {xacro_file}")
+        raise RuntimeError(f"Nira has no model: {xacro_file}")
     robot_description = xacro.process_file(
         xacro_file, mappings={"use_sim": "true"}
     ).toxml()
@@ -51,7 +48,7 @@ def _launch_robot(context):
             "-topic",
             "robot_description",
             "-name",
-            robot,
+            "nira",
             "-x",
             LaunchConfiguration("spawn_x"),
             "-y",
@@ -74,7 +71,7 @@ def _launch_robot(context):
         arguments=[
             "forward_position_controller",
             "--param-file",
-            os.path.join(pkg_gazebo, "config", robot, "joint_controllers.yaml"),
+            os.path.join(pkg_gazebo, "config", "nira", "joint_controllers.yaml"),
         ],
     )
     activate_joint_state_broadcaster = RegisterEventHandler(
@@ -98,7 +95,7 @@ def _launch_robot(context):
         ],
     )
     pkg_movement = get_package_share_directory("nira_movement")
-    movement_config_dir = os.path.join(pkg_movement, "config", robot)
+    movement_config_dir = os.path.join(pkg_movement, "config", "nira")
     movement_node = Node(
         package="nira_movement",
         name="node_movement",
@@ -108,7 +105,7 @@ def _launch_robot(context):
             os.path.join(
                 get_package_share_directory("nira_description"),
                 "config",
-                robot,
+                "nira",
                 "anatomy.yaml",
             ),
             os.path.join(movement_config_dir, "servo_description.yaml"),
@@ -117,7 +114,7 @@ def _launch_robot(context):
         remappings=[("joint_states", "target_joint_states")],
     )
     controllers_yaml = os.path.join(
-        pkg_gazebo, "config", robot, "joint_controllers.yaml"
+        pkg_gazebo, "config", "nira", "joint_controllers.yaml"
     )
     with open(controllers_yaml) as f:
         controllers_config = yaml.safe_load(f)
@@ -132,7 +129,7 @@ def _launch_robot(context):
         parameters=[{"joint_names": joint_names, "use_sim_time": True}],
     )
     pkg_brain = get_package_share_directory("nira_brain")
-    brain_config = os.path.join(pkg_brain, "config", robot, "parameter.yaml")
+    brain_config = os.path.join(pkg_brain, "config", "nira", "parameter.yaml")
     brain_node = Node(
         package="nira_brain",
         name="node_brain",
@@ -142,10 +139,10 @@ def _launch_robot(context):
             os.path.join(
                 get_package_share_directory("nira_description"),
                 "config",
-                robot,
+                "nira",
                 "anatomy.yaml",
             ),
-            os.path.join(pkg_brain, "config", robot, "gait.yaml"),
+            os.path.join(pkg_brain, "config", "nira", "gait.yaml"),
             brain_config,
             {"use_sim_time": True},
         ],
@@ -202,11 +199,11 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "enable_navigation",
                 default_value="false",
-                description="Launch nira_navigation (robot-specific perception + reactive nav)",
+                description="Launch nira_navigation (Nira perception + reactive nav)",
             ),
             DeclareLaunchArgument("spawn_x", default_value="-2.26"),
             DeclareLaunchArgument("spawn_y", default_value="-2.13"),
             DeclareLaunchArgument("spawn_yaw", default_value="0.0"),
-            OpaqueFunction(function=_launch_robot),
+            *_launch_nodes(),
         ]
     )

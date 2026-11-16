@@ -1,3 +1,5 @@
+> Historical setup transcript. For current Nira installation, follow [setup](../../README_SETUP.md).
+
 > Historical setup notes. For current service commands and shutdown permissions,
 > see the [Ubuntu 26.04 guide](setup_ubuntu_26.04.md#herunterfahren-neustart-und-sudo-rechte).
 

@@ -105,8 +105,8 @@ legacy request aliases and other runtime actions are outside the editor subset
 and are rejected rather than silently discarded. Continue using the runtime's
 full YAML format for those features.
 
-The existing `choreography.py` imports remain compatible. `Sequence`, `Stage`,
-`pose`, `hold`, `beats`, and `repeat` now live in `sequence_generator.py`; existing
+Import `Sequence`, `Stage`,
+`pose`, `hold`, `beats`, and `repeat` from `sequence_generator.py`; existing
 recipes and generated choreography files remain reproducible. The old recipe
 header is retained by the Python API by default; `recipe=False` selects the
 editor header with velocity units. CLI/GUI exports select that header automatically.
@@ -159,7 +159,7 @@ setup. The builder supports pose choreography and locomotion; the editor subset 
 described above. It does not implement every runtime sequence action.
 
 ```python
-from choreography import Sequence, beats, hold, pose, repeat
+from sequence_generator import Sequence, beats, hold, pose, repeat
 
 
 def nod(angle):
@@ -291,10 +291,10 @@ or balance validation; scheduler delays are excluded from all timing.
 
 ## Shared Stage API
 
-`Stage` lives in `sequence_generator.py` (also exported by `choreography.py`) and can be used by other recipes:
+`Stage` lives in `sequence_generator.py` and can be used by other recipes:
 
 ```python
-from choreography import Stage, pose
+from sequence_generator import Stage, pose
 
 stage = Stage(bpm=100, amplitude=0.6)
 with stage.section('look'):

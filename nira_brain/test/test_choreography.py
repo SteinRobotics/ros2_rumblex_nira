@@ -8,7 +8,7 @@ import yaml
 
 PACKAGE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PACKAGE / 'tools'))
-from choreography import Stage, Sequence, beats, hold, pose, repeat
+from sequence_generator import Stage, Sequence, beats, hold, pose, repeat
 from examples.curious_look import build
 from examples.dance_rock import build as build_rock, make_stage
 from examples import dance_hot_dogs_for_breakfast as hot_dogs

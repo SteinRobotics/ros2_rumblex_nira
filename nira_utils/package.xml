@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_utils</name>
   <version>0.0.1</version>
-  <description>Header-only utilities shared across RumbleX packages.</description>
+  <description>Header-only utilities shared across Nira packages.</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 

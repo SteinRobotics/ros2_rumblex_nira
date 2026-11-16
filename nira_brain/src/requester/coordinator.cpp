@@ -63,8 +63,8 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
 
     loadSequences();
 
-    timerErrorRequest_ = std::make_shared<CSimpleTimer>();
-    timerNoRequest_ = std::make_shared<CSimpleTimer>(kActivateMovementWaiting_);
+    timerErrorRequest_ = std::make_shared<utils::CSimpleTimer>();
+    timerNoRequest_ = std::make_shared<utils::CSimpleTimer>(kActivateMovementWaiting_);
 }
 
 void CCoordinator::loadSequences() {

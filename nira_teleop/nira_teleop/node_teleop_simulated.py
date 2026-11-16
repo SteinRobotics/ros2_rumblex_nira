@@ -48,7 +48,7 @@ class ControllerGui:
         pygame.display.init()
         pygame.font.init()
         self.screen = pygame.display.set_mode(self.SIZE)
-        pygame.display.set_caption('RumbleX simulated controller')
+        pygame.display.set_caption('Nira simulated controller')
         self.font = pygame.font.Font(None, 25)
         self.small_font = pygame.font.Font(None, 21)
         self.buttons = {
@@ -160,7 +160,7 @@ class ControllerGui:
 
     def draw(self, now):
         self.screen.fill((22, 27, 38))
-        self.label('RumbleX simulated controller', (500, 32))
+        self.label('Nira simulated controller', (500, 32))
         # Rounded body, two grips, and symmetric PS3-style stick placement.
         pygame.draw.ellipse(self.screen, (48, 53, 63), (80, 185, 270, 370))
         pygame.draw.ellipse(self.screen, (48, 53, 63), (650, 185, 270, 370))

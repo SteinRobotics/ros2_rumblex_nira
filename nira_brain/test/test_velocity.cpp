@@ -132,13 +132,9 @@ TEST_F(VelocityTest, MaximumRequestCompletesSlowSwingBeforeSelectingTripodWithin
     EXPECT_LE(ticks * 0.02, 1.0);
 }
 
-TEST_F(VelocityTest, LegacyLimitsMustMatchAuthoritativeLimits) {
-    auto parameters = test_helpers::defaultRobotParameters();
-    parameters.emplace_back("gait.move_combined.max_linear_velocity_m_s", 0.1);
-    rclcpp::NodeOptions options;
-    options.parameter_overrides(parameters);
-    auto mismatched = std::make_shared<rclcpp::Node>("mismatched_velocity_limits", options);
-    EXPECT_THROW(Parameters::declare(mismatched), std::invalid_argument);
+TEST_F(VelocityTest, GaitUsesAuthoritativeVelocityLimits) {
+    EXPECT_DOUBLE_EQ(params.move_combined.max_linear_velocity.numerical_value_in(m / s), 0.1);
+    EXPECT_DOUBLE_EQ(params.move_combined.max_angular_velocity.numerical_value_in(rad / s), 0.4);
 }
 
 TEST(VelocityLimits, PlanarMagnitudeDirectionUnitsAndInvalidCommands) {

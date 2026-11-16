@@ -134,6 +134,3 @@ class CPIDController {
 };
 
 }  // namespace utils
-
-// Backward-compat alias
-using CPIDController = utils::CPIDController;

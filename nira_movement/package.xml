@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_movement</name>
   <version>0.0.1</version>
-  <description>Gait controller, kinematics, and movement primitives for the RumbleX hexapod platform</description>
+  <description>Gait controller, kinematics, and movement primitives for the Nira hexapod</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 

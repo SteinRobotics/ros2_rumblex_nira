@@ -1,7 +1,6 @@
 node_movement:
   ros__parameters:
     servo.serial_port: '/dev/serial/by-id/usb-1a86_USB_Single_Serial_5B8E115006-if00'
-    servo.controller_type: 'feetech'
 
     servo.names: ['HEAD_YAW', 'HEAD_PITCH',
                  'LEG_RIGHT_FRONT_COXA', 'LEG_RIGHT_FRONT_FEMUR', 'LEG_RIGHT_FRONT_TIBIA',

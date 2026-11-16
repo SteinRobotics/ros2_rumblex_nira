@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from choreography import Sequence, Stage, pose
+from sequence_generator import Sequence, Stage, pose
 
 SONG = 'lovemusic_ai__Iron_Star_March.mp3'
 DURATION_S = 30.0

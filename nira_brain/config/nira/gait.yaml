@@ -24,8 +24,6 @@ node_brain:
     gait.move_combined.velocity_threshold_wave_ripple: 0.3
     gait.move_combined.velocity_threshold_ripple_tripod: 0.6
     gait.move_combined.hysteresis_margin: 0.04
-    gait.move_combined.max_linear_velocity_m_s: 0.10   # must match brain max_velocity_linear
-    gait.move_combined.max_angular_velocity_rad_s: 0.40 # must match brain max_velocity_rotation
 
     #### GAIT LEG WAVE PARAMETERS ####
     gait.leg_wave.leg_lift_height_m: 0.03 # m

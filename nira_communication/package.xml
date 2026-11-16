@@ -3,7 +3,7 @@
 <package format="3">
   <name>nira_communication</name>
   <version>0.0.1</version>
-  <description>Speech recognition, TTS, and audio I/O for the RumbleX hexapod platform</description>
+  <description>Speech recognition, TTS, and audio I/O for the Nira hexapod</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
 

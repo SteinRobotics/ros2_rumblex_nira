@@ -1,7 +1,6 @@
-"""Launch the STL-based RumbleX model in Gazebo Harmonic."""
+"""Launch the STL-based Nira model in Gazebo Harmonic."""
 
 import os
-import re
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
@@ -35,11 +34,10 @@ def _after_success(actions, stage):
 
 
 def _launch_robot(context):
-    robot = "nira"
     description_share = get_package_share_directory("nira_description")
     gazebo_share = get_package_share_directory("nira_gazebo")
     robot_description = xacro.process_file(
-        os.path.join(description_share, "urdf", f"{robot}_mesh.urdf.xacro"),
+        os.path.join(description_share, "urdf", "nira_mesh.urdf.xacro"),
         mappings={"use_sim": "true"},
     ).toxml()
     gazebo = IncludeLaunchDescription(
@@ -71,7 +69,7 @@ def _launch_robot(context):
             "-topic",
             "robot_description",
             "-name",
-            f"{robot}_mesh",
+            "nira_mesh",
             "-x",
             LaunchConfiguration("spawn_x"),
             "-y",
@@ -95,7 +93,7 @@ def _launch_robot(context):
         arguments=[
             "forward_position_controller",
             "--param-file",
-            os.path.join(gazebo_share, "config", robot, "joint_controllers.yaml"),
+            os.path.join(gazebo_share, "config", "nira", "joint_controllers.yaml"),
         ],
         output="screen",
     )

@@ -29,12 +29,10 @@ def load(package, name):
     return module
 
 
-def context(robot, driver="true", sweep="true", camera="false"):
+def context(driver="true", camera="false"):
     result = LaunchContext()
     result.launch_configurations.update(
-        robot=robot,
         enable_driver=driver,
-        enable_head_scan=sweep,
         enable_camera=camera,
         camera_device="/dev/v4l/by-id/test-meet-se",
         camera_params_file="",
@@ -43,53 +41,35 @@ def context(robot, driver="true", sweep="true", camera="false"):
     return result
 
 
-@pytest.mark.parametrize("robot,package,count", [("nira", "nira_lidar_2d", 1)])
-def test_selected_pipeline(robot, package, count):
-    module = load("nira_bringup", "sensors_launch")
-    with patch.object(
-        module, "get_package_share_directory", side_effect=lambda name: str(ROOT / name)
-    ):
-        ctx = context(robot)
-        actions = module._launch_sensors(ctx)
-        assert len(actions) == count
-        assert all(isinstance(action, IncludeLaunchDescription) for action in actions)
-        actions[0].launch_description_source.get_launch_description(ctx)
-        assert package in actions[0].launch_description_source.location
-        assert actions[0].condition.evaluate(ctx)
-        assert not actions[0].condition.evaluate(context(robot, driver="false"))
-
-
-@pytest.mark.parametrize(
-    "robot,enabled,expected",
-    [
-        ("nira", "true", True),
-        ("nira", "false", False),
-    ],
-)
-def test_camera_selection_is_optional(robot, enabled, expected):
-    module = load("nira_bringup", "sensors_launch")
-    ctx = context(robot, driver="false", camera=enabled)
-    with patch.object(
-        module, "get_package_share_directory", side_effect=lambda name: str(ROOT / name)
-    ) as lookup:
-        actions = module._launch_sensors(ctx)
-    for action in actions:
-        action.launch_description_source.get_launch_description(ctx)
-    camera_actions = [
-        action
-        for action in actions
-        if "camera_launch" in evaluate(ctx, action.launch_description_source.location)
+@pytest.mark.parametrize("driver", ["true", "false"])
+@pytest.mark.parametrize("camera", ["true", "false"])
+def test_nira_sensor_conditions_and_camera_overrides(driver, camera):
+    description = load("nira_bringup", "sensors_launch").generate_launch_description()
+    ctx = context(driver=driver, camera=camera)
+    ctx.launch_configurations.update(
+        camera_params_file="/tmp/camera.yaml",
+        camera_info_url="file:///tmp/calibration.yaml",
+    )
+    actions = [
+        a for a in description.entities if isinstance(a, IncludeLaunchDescription)
     ]
-    assert len(camera_actions) == int(expected)
-    assert (
-        "nira_camera" in [call.args[0] for call in lookup.call_args_list]
-    ) == expected
-    if expected:
-        arguments = dict(camera_actions[0].launch_arguments)
-        assert evaluate(ctx, arguments["video_device"]) == "/dev/v4l/by-id/test-meet-se"
-        assert not actions[0].condition.evaluate(
-            ctx
-        )  # Camera can run with lidar disabled.
+    assert len(actions) == 2
+    for action, package, enabled in zip(
+        actions, ("nira_lidar_2d", "nira_camera"), (driver, camera)
+    ):
+        location = evaluate(ctx, action.launch_description_source.location)
+        assert package in location
+        assert action.condition.evaluate(ctx) == (enabled == "true")
+    arguments = dict(actions[1].launch_arguments)
+    for argument, configuration in (
+        ("video_device", "camera_device"),
+        ("params_file", "camera_params_file"),
+        ("camera_info_url", "camera_info_url"),
+    ):
+        assert (
+            evaluate(ctx, arguments[argument])
+            == ctx.launch_configurations[configuration]
+        )
 
 
 @pytest.mark.parametrize(
@@ -130,7 +110,7 @@ def test_camera_arguments_forwarded_through_bringup(package, launch_name):
 @pytest.mark.parametrize("robot", ["nira"])
 def test_hardware_bringup_publishes_imu_mount_without_navigation(robot):
     description = load("nira_bringup", "target_launch").generate_launch_description()
-    ctx = context(robot)
+    ctx = context()
     ctx.launch_configurations["enable_navigation"] = "false"
     publishers = [
         action

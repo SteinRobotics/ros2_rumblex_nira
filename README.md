@@ -1,4 +1,4 @@
-# RumbleX Nira
+# Nira
 
 Independent ROS 2 repository for the Nira hexapod. This repository contains
 only Nira's hardware configuration, software, robot models and CAD.
@@ -31,16 +31,24 @@ See [sensors](SENSORS.md), [bill of materials](BOM_NIRA.md), and
 ## Interfaces and configuration
 
 All owned packages and custom message types use the `nira_` prefix.
-Node names, topic names, message fields and existing hardware calibration are preserved.
-Old `rumblex_*` launch commands and message package names must be updated by clients.
 
 Launch files target Nira directly and have no `robot` selection argument.
 Package-owned settings remain in `config/nira/`. Private speech models and credentials
 are not committed; supply `nira_communication/models/nira.onnx` locally.
 
 
-
 The workspace has its own [Python dependency manifest](requirements/README.md);
 activate it with `source scripts/environment.sh`. CAD remains separate.
 
 See [split validation](VALIDATION.md) for build results and existing test mismatches.
+
+## Cleanup migration
+
+Import recipe helpers from `sequence_generator` instead of `choreography`.
+C++ timer and PID helpers use the `utils::` namespace; global aliases were removed.
+Remove `servo.controller_type` from local configurations: Nira uses Feetech, with
+`servo.offline` retaining offline operation. Configure gait speed limits only through
+`max_velocity_linear` and `max_velocity_rotation`; the duplicate
+`gait.move_combined.max_*_velocity_*` parameters were removed.
+Speech commands now live together in `nira_brain/config/nira/interpretation.json`.
+Sensor launches directly include Nira's lidar and camera; `sensors.yaml` is removed.

@@ -1,4 +1,4 @@
-# RumbleX ROS 2 topic commands
+# Nira ROS 2 topic commands
 
 ## Inspect topics
 

@@ -71,7 +71,7 @@ class SequenceEditor:
         self.timer = None
         self.last_tick = 0
         self.pending_refresh = None
-        self.root.title('RumbleX · Sequence Studio')
+        self.root.title('Nira · Sequence Studio')
         self.root.geometry('1600x1000')
         self.root.minsize(1080, 720)
         self.root.configure(bg=BG)
@@ -146,7 +146,7 @@ class SequenceEditor:
         shell.pack(fill='both', expand=True)
         header = ttk.Frame(shell)
         header.pack(fill='x', pady=(0, 14))
-        ttk.Label(header, text='RumbleX / Sequence Studio', style='Title.TLabel').pack(side='left')
+        ttk.Label(header, text='Nira / Sequence Studio', style='Title.TLabel').pack(side='left')
         ttk.Label(header, text='OFFLINE AUTHORING', foreground=GOLD).pack(side='right')
         toolbar = ttk.Frame(shell)
         toolbar.pack(fill='x', pady=(0, 12))
@@ -512,7 +512,7 @@ class SequenceEditor:
         self.scrub.set(0)
         self.draw_route()
         dirty = self.snapshot() != self.saved
-        self.root.title(f'{"* " if dirty else ""}{self.sequence.name} · RumbleX Sequence Studio')
+        self.root.title(f'{"* " if dirty else ""}{self.sequence.name} · Nira Sequence Studio')
 
     def show_block(self):
         self.block_text.delete('1.0', 'end')

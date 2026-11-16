@@ -1,4 +1,4 @@
-# RumbleX HMI
+# Nira HMI
 
 The shared `NodeHmi` owns ROS subscriptions, page content, IP discovery, refreshes,
 and supply-voltage publication. `OledRenderer` creates the same monochrome 128×64

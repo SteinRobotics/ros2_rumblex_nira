@@ -18,7 +18,7 @@ class SimulatedBackend:
             pygame.display.init()
             self.screen = pygame.display.set_mode(
                 tuple(value * self.SCALE for value in OledRenderer.SIZE))
-            pygame.display.set_caption('RumbleX simulated OLED')
+            pygame.display.set_caption('Nira simulated OLED')
         except BaseException:
             self.close()
             raise

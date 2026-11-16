@@ -1,4 +1,4 @@
-"""Launch sensor-independent reactive navigation for a RumbleX hexapod."""
+"""Launch sensor-independent reactive navigation for a Nira hexapod."""
 
 import os
 from ament_index_python.packages import get_package_share_directory
@@ -11,13 +11,12 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_nav = get_package_share_directory("nira_navigation")
-    robot = "nira"
-    config = PathJoinSubstitution([pkg_nav, "config", robot, "navigation.yaml"])
+    config = PathJoinSubstitution([pkg_nav, "config", "nira", "navigation.yaml"])
     anatomy = PathJoinSubstitution(
         [
             get_package_share_directory("nira_description"),
             "config",
-            robot,
+            "nira",
             "anatomy.yaml",
         ]
     )

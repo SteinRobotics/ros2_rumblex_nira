@@ -2,7 +2,7 @@
 <package format="3">
   <name>nira_lidar_2d</name>
   <version>0.0.1</version>
-  <description>2D lidar integration for RumbleX</description>
+  <description>2D lidar integration for Nira</description>
   <maintainer email="stein.robotics@gmail.com">christian</maintainer>
   <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>

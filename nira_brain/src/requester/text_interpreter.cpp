@@ -20,30 +20,25 @@ CTextInterpreter::CTextInterpreter(std::shared_ptr<rclcpp::Node> node) : node_(n
 
 void CTextInterpreter::readInterpretation() {
     const auto package_share_path = ament_index_cpp::get_package_share_path("nira_brain");
-    const std::string robot = "nira";
     std::unordered_map<std::string, json> interpretationJson;
-
-    // Merge before building the vocabulary so word indices are unique across both files.
-    // A robot-specific command replaces the complete common definition with the same key.
-    for (const auto& file_path : {package_share_path / "config" / "interpretation_common.json",
-                                  package_share_path / "config" / robot / "interpretation.json"}) {
-        std::ifstream json_file(file_path);
-        if (!json_file.is_open()) {
-            RCLCPP_ERROR_STREAM(node_->get_logger(), "Unable to open file: " << file_path);
-            continue;
+    const auto file_path = package_share_path / "config" / "nira" / "interpretation.json";
+    std::ifstream json_file(file_path);
+    if (!json_file.is_open()) {
+        RCLCPP_ERROR_STREAM(node_->get_logger(), "Unable to open file: " << file_path);
+        return;
+    }
+    try {
+        json json_data;
+        json_file >> json_data;
+        if (!json_data.is_object()) {
+            throw std::invalid_argument("interpretations must be a JSON object");
         }
-        try {
-            json json_data;
-            json_file >> json_data;
-            if (!json_data.is_object()) {
-                throw std::invalid_argument("interpretations must be a JSON object");
-            }
-            for (const auto& [key, value] : json_data.items()) {
-                interpretationJson[key] = value;
-            }
-        } catch (const std::exception& e) {
-            RCLCPP_ERROR_STREAM(node_->get_logger(), "Error parsing " << file_path << ": " << e.what());
+        for (const auto& [key, value] : json_data.items()) {
+            interpretationJson[key] = value;
         }
+    } catch (const std::exception& e) {
+        RCLCPP_ERROR_STREAM(node_->get_logger(), "Error parsing " << file_path << ": " << e.what());
+        return;
     }
 
     // copy the content of interpretationJson as CWord to vocabulary_

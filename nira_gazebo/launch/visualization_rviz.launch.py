@@ -1,13 +1,11 @@
 """Launch RViz visualization with movement pipeline and teleop_twist_keyboard for cmd_vel input."""
 
 import os
-import re
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
-    OpaqueFunction,
     TimerAction,
 )
 from launch.conditions import IfCondition
@@ -30,12 +28,11 @@ _SNAP_GUI_OVERRIDES = {
 }
 
 
-def _launch_robot(context):
-    robot = "nira"
+def _launch_nodes():
     pkg_description = get_package_share_directory("nira_description")
-    xacro_file = os.path.join(pkg_description, "urdf", f"{robot}.urdf.xacro")
+    xacro_file = os.path.join(pkg_description, "urdf", "nira.urdf.xacro")
     if not os.path.isfile(xacro_file):
-        raise RuntimeError(f"Robot profile {robot!r} has no model: {xacro_file}")
+        raise RuntimeError(f"Nira has no model: {xacro_file}")
     robot_description = xacro.process_file(
         xacro_file, mappings={"use_sim": "false"}
     ).toxml()
@@ -50,7 +47,7 @@ def _launch_robot(context):
         parameters=[{"source_list": ["target_joint_states"]}],
     )
     pkg_movement = get_package_share_directory("nira_movement")
-    movement_config_dir = os.path.join(pkg_movement, "config", robot)
+    movement_config_dir = os.path.join(pkg_movement, "config", "nira")
     movement_node = Node(
         package="nira_movement",
         name="node_movement",
@@ -60,7 +57,7 @@ def _launch_robot(context):
             os.path.join(
                 get_package_share_directory("nira_description"),
                 "config",
-                robot,
+                "nira",
                 "anatomy.yaml",
             ),
             os.path.join(movement_config_dir, "servo_description.yaml"),
@@ -69,7 +66,7 @@ def _launch_robot(context):
         remappings=[("joint_states", "target_joint_states")],
     )
     pkg_brain = get_package_share_directory("nira_brain")
-    brain_config = os.path.join(pkg_brain, "config", robot, "parameter.yaml")
+    brain_config = os.path.join(pkg_brain, "config", "nira", "parameter.yaml")
     brain_node = Node(
         package="nira_brain",
         name="node_brain",
@@ -79,10 +76,10 @@ def _launch_robot(context):
             os.path.join(
                 get_package_share_directory("nira_description"),
                 "config",
-                robot,
+                "nira",
                 "anatomy.yaml",
             ),
-            os.path.join(pkg_brain, "config", robot, "gait.yaml"),
+            os.path.join(pkg_brain, "config", "nira", "gait.yaml"),
             brain_config,
         ],
     )
@@ -145,8 +142,8 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "enable_lidar",
                 default_value="false",
-                description="Start the selected robot lidar driver for RViz.",
+                description="Start Nira’s lidar driver for RViz.",
             ),
-            OpaqueFunction(function=_launch_robot),
+            *_launch_nodes(),
         ]
     )

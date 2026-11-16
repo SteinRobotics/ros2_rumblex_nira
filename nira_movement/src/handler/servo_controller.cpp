@@ -17,7 +17,6 @@
 #include "handler/servo_controller.hpp"
 
 #include <algorithm>
-#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <functional>
@@ -37,48 +36,12 @@ using std::placeholders::_1;
 
 namespace nira_movement {
 
-namespace {
-
-constexpr auto kServoControllerTypeParam = "servo.controller_type";
-constexpr auto kFeetechServoControllerType = "feetech";
-
-std::string normalizeServoControllerType(std::string controller_type) {
-    std::transform(controller_type.begin(), controller_type.end(), controller_type.begin(),
-                   [](unsigned char character) { return static_cast<char>(std::tolower(character)); });
-    return controller_type;
-}
-
-std::shared_ptr<CServoProtocol> createServoProtocol(const std::shared_ptr<rclcpp::Node>& node,
-                                                    const std::string& serial_port,
-                                                    const bool is_servo_controller_offline,
-                                                    const std::string& servo_controller_type) {
-    if (is_servo_controller_offline) {
-        RCLCPP_INFO_STREAM(node->get_logger(),
-                           "CServoController: using offline protocol for servo controller type '"
-                               << servo_controller_type << "'");
-        return std::make_shared<COfflineServoProtocol>(node, serial_port);
-    }
-
-    if (servo_controller_type == kFeetechServoControllerType) {
-        return std::make_shared<CFeetechProtocol>(node, serial_port);
-    }
-
-    RCLCPP_ERROR_STREAM(node->get_logger(), "Unsupported servo.controller_type: " << servo_controller_type
-                                                                                  << "; expected feetech");
-    return nullptr;
-}
-
-}  // namespace
-
 CServoController::CServoController(std::shared_ptr<rclcpp::Node> node) : node_(node) {
     cycle_counter_ = 0;
 
     RCLCPP_INFO_STREAM(node_->get_logger(), "CServoController: initializing connection...");
 
     std::string serial_port = node_->declare_parameter<std::string>("servo.serial_port", "/dev/ttyUSB0");
-
-    std::string servo_controller_type = normalizeServoControllerType(
-        node_->declare_parameter<std::string>(kServoControllerTypeParam, kFeetechServoControllerType));
 
     bool is_servo_controller_offline = node_->declare_parameter<bool>("servo.offline", false);
 
@@ -129,9 +92,11 @@ CServoController::CServoController(std::shared_ptr<rclcpp::Node> node) : node_(n
     pub_angles_ = node_->create_publisher<ServoAngles>("servo_angles", 10);
     pub_status_ = node_->create_publisher<ServoStatus>("servo_status", 10);
 
-    protocol_ = createServoProtocol(node_, serial_port, is_servo_controller_offline, servo_controller_type);
-    if (!protocol_) {
-        return;
+    if (is_servo_controller_offline) {
+        RCLCPP_INFO(node_->get_logger(), "CServoController: using offline protocol");
+        protocol_ = std::make_shared<COfflineServoProtocol>(node_, serial_port);
+    } else {
+        protocol_ = std::make_shared<CFeetechProtocol>(node_, serial_port);
     }
 
     connection_ready_ = protocol_->triggerConnection();

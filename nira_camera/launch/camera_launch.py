@@ -1,7 +1,6 @@
-"""Launch a robot's USB camera without selecting an arbitrary video device."""
+"""Launch Nira's USB camera without selecting an arbitrary video device."""
 
 from pathlib import Path
-import re
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -11,15 +10,14 @@ from launch_ros.actions import Node
 
 
 def _launch_camera(context):
-    robot = "nira"
     profile = (
         Path(get_package_share_directory("nira_camera"))
         / "config"
-        / robot
+        / "nira"
         / "camera.yaml"
     )
     if not profile.is_file():
-        raise RuntimeError(f"No camera profile for robot {robot!r}: {profile}")
+        raise RuntimeError(f"No Nira camera configuration: {profile}")
     params_file = LaunchConfiguration("params_file").perform(context) or str(profile)
     try:
         config = yaml.safe_load(Path(params_file).read_text())
@@ -63,7 +61,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "params_file",
                 default_value="",
-                description="Camera YAML override; defaults to config/<robot>/camera.yaml",
+                description="Camera YAML override; defaults to config/nira/camera.yaml",
             ),
             DeclareLaunchArgument(
                 "video_device",

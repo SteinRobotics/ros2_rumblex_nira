@@ -31,7 +31,7 @@ Follow [nira_doc/BUILD_AND_TEST.md](nira_doc/BUILD_AND_TEST.md) to define and ve
 `nira_limited`. Check existing jobs first. On this amd64 host use MemoryHigh=6G,
 MemoryMax=8G, MemorySwapMax=1G and a five-minute timeout, two compiler workers,
 sequential packages and one test worker. On Pi use the guide's RAM-relative limits
-and one worker. Run the two workspaces sequentially. After a timeout or memory failure,
+and one worker. Run heavy workloads sequentially across sessions. After a timeout or memory failure,
 inspect logs and resume only a smaller focused batch; never rerun the full workload automatically.
 
 ## Build

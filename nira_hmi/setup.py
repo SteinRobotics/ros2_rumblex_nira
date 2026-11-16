@@ -17,7 +17,7 @@ setup(
     zip_safe=True,
     maintainer='christian',
     maintainer_email='stein.robotics@gmail.com',
-    description='Human-machine interface (OLED display, relay control, power monitoring) for the RumbleX hexapod platform',
+    description='Human-machine interface (OLED display, relay control, power monitoring) for the Nira hexapod',
     license='TODO: License declaration',
     extras_require={'test': ['pytest']},
     entry_points={
