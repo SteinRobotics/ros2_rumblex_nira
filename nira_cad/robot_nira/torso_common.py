@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+
+# Allow direct execution as well as package imports.
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import math
+from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from typing import NamedTuple
+
+from build123d import *
+from nira_cad.utils.ocp_utils import show
+from nira_cad.common.servo_feetech_hls3950m import SERVO_BACK_CUTOUT, SERVO_FRONT_CUTOUT, SERVO_BRACKET_HOLES, SERVO_FRONT_BRACKET_HOLES
+
+THICKNESS = 1.5
+# Clear distance from the top of layer 2 to the underside of layer 3.
+SPACER_LENGTH_TOP = 50.0
+OCTAGON_ROTATION = 22.5  
+
+
+def chamfered_octagon(width: float, height: float, chamfer_length: float,
+                      rotation: float = 0.0) -> Sketch:
+    """Shared straight-edged plate outline with four clipped corners."""
+    with BuildSketch() as sketch:
+        Rectangle(width, height, rotation=rotation)
+        chamfer(sketch.vertices(), chamfer_length)
+    return sketch.sketch
+
+
+class ServoCutoutConfig(NamedTuple):
+    start_index: int
+    rotation_deg_clockwise: float
+    offset_x: float
+    offset_y: float
+
+def shift_points(
+    points: list[tuple[float, float]], dx: float, dy: float
+) -> list[tuple[float, float]]:
+    """Shift 2D points by a constant offset."""
+    return [(x + dx, y + dy) for x, y in points]
+
+def rotate_point_sequence(
+    points: list[tuple[float, float]], start_index: int
+) -> list[tuple[float, float]]:
+    """Rotate a point sequence so it starts at start_index."""
+    return points[start_index:] + points[:start_index]
+
+def rotate_points_clockwise(
+    points: list[tuple[float, float]], degrees: float
+) -> list[tuple[float, float]]:
+    """Rotate 2D points around the origin by degrees clockwise."""
+    radians = math.radians(-degrees)
+    cosine = math.cos(radians)
+    sine = math.sin(radians)
+    return [
+        (x * cosine - y * sine, x * sine + y * cosine)
+        for x, y in points
+    ]
+
+
+def transform_servo_back_cutout(
+    config: ServoCutoutConfig,
+) -> list[tuple[float, float]]:
+    points = rotate_point_sequence(SERVO_BACK_CUTOUT, config.start_index)
+    points = rotate_points_clockwise(points, config.rotation_deg_clockwise)
+    return shift_points(points, config.offset_x, config.offset_y)
+
+
+def transform_servo_front_cutout(
+    config: ServoCutoutConfig,
+) -> list[tuple[float, float]]:
+    points = rotate_point_sequence(SERVO_FRONT_CUTOUT, config.start_index)
+    points = rotate_points_clockwise(points, config.rotation_deg_clockwise)
+    return shift_points(points, config.offset_x, config.offset_y)
+
+
+def transform_servo_bracket_holes(
+    config: ServoCutoutConfig,
+    *, front: bool = False,
+) -> list[tuple[float, float, float]]:
+    holes = SERVO_FRONT_BRACKET_HOLES if front else SERVO_BRACKET_HOLES
+    hole_centers = [(x, y) for x, y, _ in holes]
+    hole_centers = rotate_points_clockwise(hole_centers, config.rotation_deg_clockwise)
+    hole_centers = shift_points(hole_centers, config.offset_x, config.offset_y)
+    radii = [radius for _, _, radius in holes]
+    return [
+        (x, y, radius)
+        for (x, y), radius in zip(hole_centers, radii, strict=True)
+    ]
+
+
+octagon_size = 40
+
+# Rechteck-Maße
+rect_w = 220
+rect_h = 130
+half_w = (rect_w / 2) - (octagon_size / 2)
+half_h = rect_h / 2 - (octagon_size / 2)
+chamfer_length = 20
+
+with BuildSketch() as base_plate:
+    Rectangle(rect_w, rect_h)
+    chamfer(base_plate.vertices(), chamfer_length)
+
+diag_offset = 5.0
+linear_offset = 8.0
+
+octagon_position_left_top = Location((-half_w + diag_offset, half_h - diag_offset), -45.0)
+octagon_position_right_top = Location((half_w - diag_offset, half_h - diag_offset), 45.0)
+octagon_position_right_bottom = Location((half_w - diag_offset, -half_h + diag_offset), 135.0)
+octagon_position_left_bottom = Location((-half_w + diag_offset, -half_h + diag_offset), -135.0)
+octagon_position_top_middle = Location((0, half_h + linear_offset), 0.0)
+octagon_position_right_middle = Location((half_w + linear_offset, 0), 90.0)
+octagon_position_bottom_middle = Location((0, -half_h - linear_offset), 180.0)
+
+# Alle Achtecke haben dieselbe Größe -> reine Positionsliste reicht
+octagon_positions = [
+    octagon_position_left_top,
+    octagon_position_right_top,
+    octagon_position_right_bottom,
+    octagon_position_left_bottom,
+    octagon_position_top_middle,
+    octagon_position_right_middle,
+    octagon_position_bottom_middle,
+]
+
+servo_cutout_diag_offset = 15.5
+servo_cutout_linear_offset = 22.0
+
+# Jede Servo-Position: (Achteck-Mittelpunkt, Rotation im Uhrzeigersinn,
+# Offset-Richtung in x, Offset-Richtung in y). Bei Diagonalpositionen sind
+# dx und dy jeweils +-1, bei linearen Positionen (oben/unten/rechts-mitte)
+# ist genau eine der beiden Richtungen 0.
+SERVO_POSITIONS = {
+    "left_up": (octagon_position_left_top,  -1, 1),
+    "right_up": (octagon_position_right_top,  1, 1),
+    "right_down": (octagon_position_right_bottom,  1, -1),
+    "left_down": (octagon_position_left_bottom,  -1, -1),
+    "center_up": (octagon_position_top_middle, 0, 1),
+    "head": (octagon_position_right_middle, 1, 0),
+    "center_down": (octagon_position_bottom_middle, 0, -1),
+}
+
+
+def _build_servo_cutout_config(
+    position: Location, dx_sign: int, dy_sign: int
+) -> ServoCutoutConfig:
+    is_diagonal = dx_sign != 0 and dy_sign != 0
+    offset = servo_cutout_diag_offset if is_diagonal else servo_cutout_linear_offset
+    return ServoCutoutConfig(
+        start_index=7,
+        rotation_deg_clockwise=position.orientation.Z,
+        offset_x=position.position.X + dx_sign * offset,
+        offset_y=position.position.Y + dy_sign * offset,
+    )
+
+
+SERVO_CUTOUT_CONFIGS = {
+    name: _build_servo_cutout_config(*params) for name, params in SERVO_POSITIONS.items()
+}
+
+# Je ein dict pro Servo-Position, z. B. SERVO_BACK_CUTOUTS["head"]
+SERVO_BACK_CUTOUTS = {
+    name: transform_servo_back_cutout(config) for name, config in SERVO_CUTOUT_CONFIGS.items()
+}
+SERVO_FRONT_CUTOUTS = {
+    name: transform_servo_front_cutout(config) for name, config in SERVO_CUTOUT_CONFIGS.items()
+}
+SERVO_BRACKET_HOLES_BY_POSITION = {
+    name: transform_servo_bracket_holes(config) for name, config in SERVO_CUTOUT_CONFIGS.items()
+}
+
+LIST_SERVO_BRACKET_HOLES = [
+    hole for holes in SERVO_BRACKET_HOLES_BY_POSITION.values() for hole in holes
+]
+LIST_SERVO_FRONT_BRACKET_HOLES = [
+    hole for config in SERVO_CUTOUT_CONFIGS.values()
+    for hole in transform_servo_bracket_holes(config, front=True)
+]
+
+########## Inner sketch -> rectangle + 2x octagons ##########
+inner_radius_oct = 54       # Umkreisradius der Achtecke (Hantelköpfe)
+inner_distance_oct = 90     # Abstand der Achteck-Mittelpunkte zueinander
+inner_rectangle_width = 95  # Höhe des Verbindungsstegs (Griff)
+
+with BuildSketch() as hantel:
+    with Locations((-inner_distance_oct / 2, 0), (inner_distance_oct / 2, 0)):
+        RegularPolygon(radius=inner_radius_oct, side_count=8, rotation=OCTAGON_ROTATION)
+    Rectangle(inner_distance_oct, inner_rectangle_width)
+
+
+################ Slots ###################
+
+rectangle_slots_width = 8.0
+rectangle_slots_height = 1.5
+rectangle_slots_completed_width = 4 * rectangle_slots_width
+rectangle_slots_distance_border = 10.0
+
+with BuildSketch() as rectangle_slots:
+    with Locations((-rectangle_slots_completed_width / 2, 0), (0, 0), (rectangle_slots_completed_width / 2, 0)):
+        Rectangle(rectangle_slots_width, rectangle_slots_height)
+
+rectangle_slots_locations = [
+    Location((38.0, rect_h / 2 - rectangle_slots_distance_border), 0.0),
+    Location((38.0, -rect_h / 2 + rectangle_slots_distance_border), 0.0),
+    Location((-38.0, rect_h / 2 - rectangle_slots_distance_border), 0.0),
+    Location((-38.0, -rect_h / 2 + rectangle_slots_distance_border), 0.0),
+    Location((rect_w / 2 - rectangle_slots_distance_border, 0.0), 90.0),
+    Location((-rect_w / 2 + rectangle_slots_distance_border, 0.0), 90.0),
+]
+
+# Follow the inner octagons with the same perpendicular clearance as the
+# existing horizontal rows, centred on each diagonal inner edge.
+inner_octagon_apothem = inner_radius_oct * math.cos(math.radians(OCTAGON_ROTATION))
+slots_inner_clearance = rect_h / 2 - rectangle_slots_distance_border - inner_octagon_apothem
+diagonal_slot_offset = (inner_octagon_apothem + slots_inner_clearance) / math.sqrt(2)
+diagonal_slots_locations = [
+    Location(
+        (sx * (inner_distance_oct / 2 + diagonal_slot_offset), sy * diagonal_slot_offset),
+        -sx * sy * 45.0,
+    )
+    for sx, sy in ((1, 1), (-1, 1), (-1, -1), (1, -1))
+]
+
+# The two front braces use a shorter joint, set farther from the sensor housing.
+# Keep the rear diagonal joints on the original three-tab pattern.
+front_diagonal_tab_width = 6.0
+front_diagonal_tab_offsets = (-7.0, 7.0)
+front_diagonal_outward_offset = 2.0
+
+
+def _front_diagonal_slot_location(loc: Location) -> Location:
+    """Center the brace along its servo axis, preserving its normal clearance."""
+    x = loc.position.X
+    y = loc.position.Y + math.copysign(front_diagonal_outward_offset, loc.position.Y)
+    servo = SERVO_CUTOUT_CONFIGS["right_up" if y > 0 else "right_down"]
+    angle = math.radians(loc.orientation.Z)
+    tangent_x, tangent_y = math.cos(angle), math.sin(angle)
+    shift = ((servo.offset_x - x) * tangent_x
+             + (servo.offset_y - y) * tangent_y)
+    return Location((x + shift * tangent_x, y + shift * tangent_y),
+                    loc.orientation.Z)
+
+
+front_diagonal_slots_locations = [
+    _front_diagonal_slot_location(loc)
+    for loc in diagonal_slots_locations if loc.position.X > 0
+]
+
+with BuildSketch() as front_diagonal_slots:
+    with Locations(*[(x, 0) for x in front_diagonal_tab_offsets]):
+        Rectangle(front_diagonal_tab_width, rectangle_slots_height)
+
+############### Holes ###################
+hole_radius = 1.5
+spacer_outer_radius = 3.0
+hole_distance_border = rectangle_slots_distance_border - rectangle_slots_height / 2 - spacer_outer_radius
+hole_locations = [
+    Location((40.0, rect_h / 2 - hole_distance_border), 0.0),
+    Location((-40.0, rect_h / 2 - hole_distance_border), 0.0),
+    Location((40.0, -rect_h / 2 + hole_distance_border), 0.0),
+    Location((-40.0, -rect_h / 2 + hole_distance_border), 0.0),
+    Location((rect_w / 2 - hole_distance_border, 15.0), 0.0),
+    Location((rect_w / 2 - hole_distance_border, -15.0), 0.0),
+    Location((-rect_w / 2 + hole_distance_border, 15.0), 0.0),
+    Location((-rect_w / 2 + hole_distance_border, -15.0), 0.0),
+]
+
+def build_surface() -> Sketch:
+    with BuildSketch() as sketch:
+        insert(base_plate)
+        for pos in octagon_positions:
+            with Locations(pos):
+                RegularPolygon(radius=octagon_size, side_count=8, rotation=OCTAGON_ROTATION)
+
+        insert(hantel.sketch, mode=Mode.SUBTRACT)
+
+        for loc in rectangle_slots_locations:
+            with Locations(loc):
+                insert(rectangle_slots.sketch, mode=Mode.SUBTRACT)
+
+        for loc in hole_locations:
+            with Locations(loc):
+                Circle(hole_radius, mode=Mode.SUBTRACT)
+
+    return sketch.sketch
+
+
+def build_model(surface: Sketch) -> Part:
+    with BuildPart() as model:
+        insert(surface)
+        extrude(amount=THICKNESS)
+
+    return model.part
+
+
+def main() -> None:
+    surface = build_surface()
+    result = build_model(surface)
+    show(result, name="torso_layer_common", clear=True)
+
+
+if __name__ == "__main__":
+    main()

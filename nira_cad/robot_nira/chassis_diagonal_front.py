@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Nira diagonal front chassis plate."""
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from build123d import (BuildSketch, ExportDXF, Locations, Part, Polygon,
+                       Rectangle, Sketch, export_step)
+from nira_cad.robot_nira import EXPORT_DIR, dxf_directory
+from nira_cad.robot_nira import chassis_common
+import nira_cad.robot_nira.torso_common as torso_common
+from nira_cad.utils.ocp_utils import show
+
+FRONT_DIAGONAL_HEIGHT = 10.0
+FRONT_DIAGONAL_WIDTH = 24.0
+
+
+def build_surface(height: float) -> Sketch:
+    """Compact chamfered brace with two tabs for the front deck."""
+    if height <= FRONT_DIAGONAL_HEIGHT:
+        raise ValueError("Height must leave room for the front diagonal brace")
+    tab_depth = chassis_common.TAB_DEPTH
+    half_width = FRONT_DIAGONAL_WIDTH / 2
+    with BuildSketch() as sketch:
+        Polygon(
+            (half_width, tab_depth), (half_width, FRONT_DIAGONAL_HEIGHT - 3),
+            (half_width - 3, FRONT_DIAGONAL_HEIGHT),
+            (-half_width + 3, FRONT_DIAGONAL_HEIGHT),
+            (-half_width, FRONT_DIAGONAL_HEIGHT - 3), (-half_width, tab_depth),
+            align=None,
+        )
+        with Locations(*[(x, tab_depth / 2)
+                         for x in torso_common.front_diagonal_tab_offsets]):
+            Rectangle(torso_common.front_diagonal_tab_width, tab_depth)
+    return sketch.sketch
+
+
+def build_model(height: float) -> Part:
+    return chassis_common.build_model(build_surface(height))
+
+
+def main() -> None:
+    from nira_cad.robot_nira.torso_layout import DIAGONAL_PLATE_HEIGHT
+
+    height = DIAGONAL_PLATE_HEIGHT
+    surface = build_surface(height)
+    model = chassis_common.build_model(surface)
+    model.label = "chassis_diagonal_front"
+    dxf_dir = dxf_directory(chassis_common.THICKNESS)
+    dxf_dir.mkdir(parents=True, exist_ok=True)
+    drawing = ExportDXF()
+    drawing.add_shape(surface)
+    drawing.write(str(dxf_dir / "chassis_diagonal_front.dxf"))
+    show(model, name="chassis_diagonal_front", clear=True)
+
+
+if __name__ == "__main__":
+    main()

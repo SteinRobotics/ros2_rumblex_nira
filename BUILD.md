@@ -2,6 +2,14 @@
 
 ## Terminal environment
 
+```bash
+cd /home/christian/Workspace/colcon_nira
+source /opt/ros/lyrical/setup.bash
+source .venv/bin/activate
+
+python -m colcon build --symlink-install
+```
+
 From the repository, activate its environment without inheriting another workspace:
 
 ```bash

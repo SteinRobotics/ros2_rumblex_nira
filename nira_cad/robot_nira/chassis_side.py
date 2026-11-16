@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+"""Nira side chassis plate."""
+if __package__ in (None, ""):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from build123d import (BuildSketch, ExportDXF, Locations, Mode, Part, Polygon,
+                       Pos, Rectangle, Rot, Sketch, export_step)
+from nira_cad.robot_nira import EXPORT_DIR, chassis_back, dxf_directory
+from nira_cad.robot_nira import chassis_common
+import nira_cad.robot_nira.torso_common as torso_common
+from nira_cad.robot_nira.armor_style import gill_points
+from nira_cad.robot_nira.lidar_layout import LOW_RAIL_HEIGHT
+from nira_cad.utils.colors import COLOR_DARK_GRAY
+from nira_cad.utils.ocp_utils import show
+
+
+def build_surface(height: float) -> Sketch:
+    """Swept side shoulder with two tabbed legs and rear gills."""
+    tab_depth = chassis_common.TAB_DEPTH
+    rail_height = chassis_common.RAIL_HEIGHT
+    if height <= 2 * tab_depth + rail_height:
+        raise ValueError("Height must leave room for the plate below the top rail")
+
+    side_rows = sorted(
+        loc.position.X for loc in torso_common.rectangle_slots_locations
+        if loc.position.Y > 0 and abs(loc.orientation.Z) < 1e-6
+    )
+    with BuildSketch() as sketch:
+        # Full-width legs pass through the elongated slots in layer 2.
+        with Locations(*[(x, height / 2) for x in side_rows]):
+            Rectangle(chassis_common.ROW_WIDTH, height - 2 * tab_depth)
+        with Locations(((side_rows[0] + side_rows[-1]) / 2,
+                        height - tab_depth - rail_height / 2)):
+            Rectangle(side_rows[-1] - side_rows[0] + chassis_common.ROW_WIDTH,
+                      rail_height)
+        for row in side_rows:
+            for offset in (-chassis_common.TAB_PITCH, 0, chassis_common.TAB_PITCH):
+                with Locations((row + offset, tab_depth / 2),
+                               (row + offset, height - tab_depth / 2)):
+                    Rectangle(chassis_common.TAB_WIDTH, tab_depth)
+
+        deck_top = height - tab_depth - rail_height
+        sill = deck_top + LOW_RAIL_HEIGHT
+        # Clip the pointed nose 3 mm behind the slope/deck intersection.
+        front_tip_x = chassis_common.SLOPE_DECK_X - 3.0
+        # Extend only above the deck, leaving the lower front joint in its slot.
+        Polygon((chassis_common.SLOT_FRONT_X - 1, deck_top),
+                (front_tip_x, deck_top),
+                (front_tip_x, height - tab_depth),
+                (chassis_common.SLOT_FRONT_X - 1, height - tab_depth),
+                align=None)
+        cutter_end_x = max(chassis_common.SLOT_FRONT_X, chassis_common.SLOPE_DECK_X) + tab_depth
+        Polygon((chassis_common.SLOPE_START_X, height - tab_depth),
+                (chassis_common.SLOPE_DECK_X, deck_top), (cutter_end_x, deck_top),
+                (cutter_end_x, height + 1), (chassis_common.SLOPE_START_X, height + 1),
+                align=None, mode=Mode.SUBTRACT)
+        for profile in chassis_common.slope_finger_profiles(height - tab_depth):
+            Polygon(*profile, align=None, mode=Mode.SUBTRACT)
+        gill_span = 7.0
+        gill_y = (sill + 5 + height - 9 - gill_span) / 2
+        for x in (-29, -17, -5):
+            Polygon(*gill_points(x, gill_y, gill_span),
+                    align=None, mode=Mode.SUBTRACT)
+    return sketch.sketch
+
+
+def build_model(height: float) -> Part:
+    return chassis_common.build_model(build_surface(height))
+
+
+def build_plates(z_bottom: float, z_top: float) -> list[Part]:
+    """Place front, back, and side plates in the shared slots."""
+    from nira_cad.robot_nira import chassis_front
+
+    height = z_top + torso_common.THICKNESS - z_bottom
+    end = chassis_back.build_model(height)
+    nose = chassis_front.build_model(height)
+    side = build_model(height)
+    plates = []
+    upright = Pos(0, chassis_common.THICKNESS / 2, 0) * Rot(X=90)
+    for loc in torso_common.rectangle_slots_locations:
+        if abs(loc.orientation.Z) > 1e-6:
+            name = "front" if loc.position.X > 0 else "back"
+            plate = Pos(0, 0, z_bottom) * loc * upright * (nose if name == "front" else end)
+        elif loc.position.X > 0:
+            name = "left" if loc.position.Y > 0 else "right"
+            plate = Pos(0, loc.position.Y, z_bottom) * upright * side
+        else:
+            continue
+        plate.label = f"chassis_{name}"
+        plate.color = COLOR_DARK_GRAY
+        plates.append(plate)
+    return plates
+
+
+def main() -> None:
+    from nira_cad.robot_nira.torso_layout import SIDE_PLATE_HEIGHT
+
+    height = SIDE_PLATE_HEIGHT
+    surface = build_surface(height)
+    model = chassis_common.build_model(surface)
+    model.label = "chassis_side"
+    dxf_dir = dxf_directory(chassis_common.THICKNESS)
+    dxf_dir.mkdir(parents=True, exist_ok=True)
+    drawing = ExportDXF()
+    drawing.add_shape(surface)
+    drawing.write(str(dxf_dir / "chassis_side.dxf"))
+    show(model, name="chassis_side", clear=True)
+
+
+if __name__ == "__main__":
+    main()
