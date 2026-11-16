@@ -18,6 +18,13 @@ class CServoProtocol {
    public:
     explicit CServoProtocol(std::shared_ptr<rclcpp::Node> node) : node_(node) {
     }
+    // Raw dashboard registers; unsupported transports explicitly reject access.
+    virtual int dashboardRead(uint8_t, uint8_t, bool) {
+        return -1;
+    }
+    virtual bool dashboardWrite(uint8_t, uint8_t, uint16_t, bool) {
+        return false;
+    }
     virtual ~CServoProtocol() = default;
 
     // Connection
@@ -70,6 +77,16 @@ class CServoProtocol {
         return false;
     }
     virtual bool setPositionLimits(uint8_t /*id*/, uint16_t /*min_position*/, uint16_t /*max_position*/) {
+        return false;
+    }
+    // HLS hardware offsets in encoder ticks, persisted in servo EEPROM.
+    virtual bool readHardwareOffset(uint8_t, int16_t&) {
+        return false;
+    }
+    virtual bool writeHardwareOffset(uint8_t, int16_t) {
+        return false;
+    }
+    virtual bool calibrateHardwareOffset(uint8_t) {
         return false;
     }
     virtual bool getPositionOffset(uint8_t /*id*/, int8_t& /*deviation*/) {

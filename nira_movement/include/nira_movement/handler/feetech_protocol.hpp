@@ -18,6 +18,8 @@ class CFeetechProtocol : public CServoProtocol {
     CFeetechProtocol(std::shared_ptr<rclcpp::Node> node, const std::string& device_name);
     ~CFeetechProtocol() override;
 
+    int dashboardRead(uint8_t id, uint8_t address, bool word) override;
+    bool dashboardWrite(uint8_t id, uint8_t address, uint16_t value, bool word) override;
     bool triggerConnection() override;
     void closeConnection() override;
     bool isConnected() override;
@@ -36,6 +38,9 @@ class CFeetechProtocol : public CServoProtocol {
     bool getPosition(uint8_t id, int16_t& pos) override;
     bool getPositionLimits(uint8_t id, uint16_t& min_position, uint16_t& max_position) override;
     bool setPositionLimits(uint8_t id, uint16_t min_position, uint16_t max_position) override;
+    bool readHardwareOffset(uint8_t id, int16_t& ticks) override;
+    bool writeHardwareOffset(uint8_t id, int16_t ticks) override;
+    bool calibrateHardwareOffset(uint8_t id) override;
     bool getPositionOffset(uint8_t id, int8_t& deviation) override;
     bool setPositionOffset(uint8_t id, int8_t deviation) override;
     bool savePositionOffset(uint8_t id) override;

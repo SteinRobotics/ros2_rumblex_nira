@@ -27,6 +27,11 @@ uint8 SERVO_LED_CTRL_READ = 34
 uint8 SERVO_LED_ERROR_WRITE = 35
 uint8 SERVO_LED_ERROR_READ = 36
 
+# HLS hardware offsets: sign-magnitude word, bit 15 = negative, data1 low byte.
+uint8 SERVO_HARDWARE_OFFSET_READ = 37
+uint8 SERVO_HARDWARE_OFFSET_SAVE = 38
+uint8 SERVO_HARDWARE_OFFSET_CALIBRATE = 39
+
 string name
 uint8 cmd
 uint8 data1

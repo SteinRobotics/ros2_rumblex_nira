@@ -24,6 +24,7 @@ find_package(yaml-cpp REQUIRED)
 ## set sources
 set(SOURCES
   src/handler/servo_controller.cpp
+  src/handler/servo_dashboard.cpp
   src/handler/feetech_protocol.cpp
   src/handler/feetech/HLSCL.cpp
   src/handler/feetech/SCS.cpp
@@ -81,6 +82,16 @@ install(DIRECTORY
   config
   DESTINATION share/${PROJECT_NAME}/
 )
+
+install(FILES
+  scripts/servo_driver_gui/gui.py
+  scripts/servo_driver_gui/servo_bus.py
+  scripts/servo_driver_gui/ros_backend.py
+  scripts/servo_driver_gui/dashboard_widgets.py
+  DESTINATION lib/${PROJECT_NAME}/servo_gui)
+install(DIRECTORY scripts/servo_driver_gui/assets
+  DESTINATION lib/${PROJECT_NAME}/servo_gui)
+install(PROGRAMS scripts/servo_driver_gui_node DESTINATION lib/${PROJECT_NAME})
 
 # Unit tests
 if(BUILD_TESTING)

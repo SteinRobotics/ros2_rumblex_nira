@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+import os
+import sys
+base = os.path.dirname(os.path.abspath(__file__))
+installed = os.path.join(base, "servo_gui")
+source = os.path.join(os.path.dirname(os.path.realpath(__file__)), "servo_driver_gui")
+sys.path.insert(0, installed if os.path.isdir(installed) else source)
+from ros_backend import main
+sys.exit(main())

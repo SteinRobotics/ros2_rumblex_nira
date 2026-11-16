@@ -114,20 +114,12 @@ CServoController::CServoController(std::shared_ptr<rclcpp::Node> node) : node_(n
         name_to_idx_[names.at(i)] = i;
     }
 
-    protocol_ = createServoProtocol(node_, serial_port, is_servo_controller_offline, servo_controller_type);
-    if (!protocol_) {
-        return;
-    }
-
-    if (!protocol_->triggerConnection()) {
-        RCLCPP_WARN_STREAM(node_->get_logger(), "CServoController: connection FAILED");
-        return;
-    }
-    RCLCPP_INFO_STREAM(node_->get_logger(), "CServoController: connection successful");
-
-    // wait 500ms for servos to be ready
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
+    dashboard_service_ = node_->create_service<nira_interfaces::srv::ServoDashboard>(
+        "servo_dashboard",
+        [this](const std::shared_ptr<nira_interfaces::srv::ServoDashboard::Request> request,
+               std::shared_ptr<nira_interfaces::srv::ServoDashboard::Response> response) {
+            dashboard(*request, *response);
+        });
     sub_single_servo_request_ = node_->create_subscription<ServoAngle>(
         "single_servo_request", 10, std::bind(&CServoController::onSingleServoRequestReceived, this, _1));
 
@@ -136,9 +128,31 @@ CServoController::CServoController(std::shared_ptr<rclcpp::Node> node) : node_(n
 
     pub_angles_ = node_->create_publisher<ServoAngles>("servo_angles", 10);
     pub_status_ = node_->create_publisher<ServoStatus>("servo_status", 10);
+
+    protocol_ = createServoProtocol(node_, serial_port, is_servo_controller_offline, servo_controller_type);
+    if (!protocol_) {
+        return;
+    }
+
+    connection_ready_ = protocol_->triggerConnection();
+    if (!connection_ready_) {
+        RCLCPP_WARN_STREAM(node_->get_logger(),
+                           "CServoController: connection FAILED; hardware commands disabled. Correct "
+                           "servo.serial_port and restart");
+        return;
+    }
+    RCLCPP_INFO_STREAM(node_->get_logger(), "CServoController: connection successful");
+
+    // wait 500ms for servos to be ready
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 }
 
 void CServoController::initServos() {
+    if (!connection_ready_ || !protocol_ || servos_.empty()) {
+        RCLCPP_WARN(node_->get_logger(),
+                    "Skipping servo initialization: no connected bus or configured servos");
+        return;
+    }
     RCLCPP_INFO_STREAM(node_->get_logger(), "CServoController: initializing servos... " << servos_.size());
 
     for (auto& [idx, servo] : servos_) {
@@ -229,7 +243,7 @@ int CServoController::angle_to_ticks(double angle, int idx) {
 }
 
 void CServoController::onTimerStatus() {
-    if (servos_.empty()) return;
+    if (!connection_ready_ || !protocol_ || !pub_status_ || servos_.empty()) return;
     // RCLCPP_INFO_STREAM(node_->get_logger(), "onTimerStatus: " << uint32_t(cycle_counter_));
     CServo& servo = servos_.at(cycle_counter_);
 
@@ -287,7 +301,7 @@ void CServoController::onTimerStatus() {
 
 void CServoController::requestAngles(const std::map<uint32_t, double>& target_angles,
                                      const double duration_s) {
-    if (!protocol_ || !std::isfinite(duration_s) || duration_s < 0.0) return;
+    if (!connection_ready_ || !protocol_ || !std::isfinite(duration_s) || duration_s < 0.0) return;
     bool queued = false;
     for (const auto& [idx, target_angle] : target_angles) {
         if (!std::isfinite(target_angle)) continue;
@@ -334,6 +348,10 @@ void CServoController::requestAngles(const std::map<uint32_t, double>& target_an
 // }
 
 void CServoController::onSingleServoRequestReceived(const ServoAngle& msg) {
+    if (!connection_ready_ || !protocol_) {
+        RCLCPP_WARN(node_->get_logger(), "Ignoring servo angle request: serial bus unavailable");
+        return;
+    }
     RCLCPP_INFO(node_->get_logger(), "single_servo_request: %s: %.1f", msg.name.c_str(), msg.angle_deg);
     auto it = name_to_idx_.find(msg.name);
     if (it == name_to_idx_.end()) {
@@ -352,6 +370,10 @@ void CServoController::onSingleServoRequestReceived(const ServoAngle& msg) {
 }
 
 void CServoController::onServoDirectRequestReceived(const ServoDirectRequest& msg) {
+    if (!connection_ready_ || !protocol_) {
+        RCLCPP_WARN(node_->get_logger(), "Ignoring direct servo request: serial bus unavailable");
+        return;
+    }
     RCLCPP_INFO(node_->get_logger(), "servo_direct_request: %s: %d", msg.name.c_str(), msg.cmd);
 
     auto it = name_to_idx_.find(msg.name);
@@ -367,6 +389,42 @@ void CServoController::onServoDirectRequestReceived(const ServoDirectRequest& ms
     uint8_t serial_id = servos_.at(idx).getSerialID();
 
     switch (msg.cmd) {
+        case ServoDirectRequest::SERVO_ANGLE_OFFSET_ADJUST:
+        case ServoDirectRequest::SERVO_ANGLE_OFFSET_WRITE:
+        case ServoDirectRequest::SERVO_ANGLE_OFFSET_READ: {
+            int8_t deviation = 0;
+            bool success = false;
+            if (msg.cmd == ServoDirectRequest::SERVO_ANGLE_OFFSET_ADJUST) {
+                int signed_value = msg.data1 < 128 ? msg.data1 : static_cast<int>(msg.data1) - 256;
+                success = protocol_->setPositionOffset(serial_id, static_cast<int8_t>(signed_value));
+            } else if (msg.cmd == ServoDirectRequest::SERVO_ANGLE_OFFSET_WRITE) {
+                success = protocol_->savePositionOffset(serial_id);
+            } else {
+                success = protocol_->getPositionOffset(serial_id, deviation);
+            }
+            RCLCPP_INFO(node_->get_logger(),
+                        "legacy hardware offset: success=%d deviation=%d (0.24 deg units)", success,
+                        deviation);
+            break;
+        }
+
+        case ServoDirectRequest::SERVO_HARDWARE_OFFSET_READ:
+        case ServoDirectRequest::SERVO_HARDWARE_OFFSET_SAVE:
+        case ServoDirectRequest::SERVO_HARDWARE_OFFSET_CALIBRATE: {
+            nira_interfaces::srv::ServoDashboard::Request request;
+            nira_interfaces::srv::ServoDashboard::Response response;
+            request.name = msg.name;
+            request.operation =
+                msg.cmd == ServoDirectRequest::SERVO_HARDWARE_OFFSET_READ   ? request.READ_OFFSET
+                : msg.cmd == ServoDirectRequest::SERVO_HARDWARE_OFFSET_SAVE ? request.SAVE_OFFSET
+                                                                            : request.CALIBRATE_OFFSET;
+            uint16_t raw = msg.data1 | (static_cast<uint16_t>(msg.data2) << 8);
+            request.offset_ticks = (raw & 0x8000) ? -(raw & 0x7fff) : raw;
+            dashboard(request, response);
+            RCLCPP_INFO(node_->get_logger(), "hardware offset: outcome=%u ticks=%d %s", response.outcome,
+                        response.offset_ticks, response.detail.c_str());
+            break;
+        }
         case ServoDirectRequest::SERVO_ID_READ: {
             uint8_t id = 0;
             protocol_->getServoID(serial_id, id);

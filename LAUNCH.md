@@ -18,6 +18,9 @@ ros2 launch nira_description display_mesh.launch.py
 # Individual components
 ros2 launch nira_movement movement_offline_launch.py
 ros2 launch nira_communication communication_launch.py
+# servo gui
+ros2 launch nira_movement movement_launch.py            # on robot
+ros2 launch nira_movement servo_driver_gui.launch.py    # on remote pc
 ```
 
 Use `--show-args` on an entry point for its supported options. Hardware launches leave

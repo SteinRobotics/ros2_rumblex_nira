@@ -12,12 +12,13 @@
 
 #include "handler/i_servo_controller.hpp"
 #include "handler/servo_protocol.hpp"
-#include "rclcpp/rclcpp.hpp"
 #include "nira_interfaces/msg/servo_angle.hpp"
 #include "nira_interfaces/msg/servo_angles.hpp"
 #include "nira_interfaces/msg/servo_direct_request.hpp"
 #include "nira_interfaces/msg/servo_status.hpp"
+#include "nira_interfaces/srv/servo_dashboard.hpp"
 #include "nira_utils/body_types.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/header.hpp"
 
 namespace nira_movement {
@@ -119,6 +120,9 @@ class CServoController : public IServoController {
    private:
     friend class ServoControllerTestAccess;
     void initServos();
+    void dashboard(const nira_interfaces::srv::ServoDashboard::Request& request,
+                   nira_interfaces::srv::ServoDashboard::Response& response);
+    rclcpp::Service<nira_interfaces::srv::ServoDashboard>::SharedPtr dashboard_service_;
     void onTimerStatus();
 
     double ticks_to_angle(int ticks, int idx);
@@ -127,6 +131,7 @@ class CServoController : public IServoController {
     std::map<int, CServo> servos_;
     std::map<std::string, int> name_to_idx_;
     uint8_t cycle_counter_ = 0;
+    bool connection_ready_ = false;
     std::shared_ptr<rclcpp::Node> node_;
 
     rclcpp::Subscription<nira_interfaces::msg::ServoAngle>::SharedPtr sub_single_servo_request_;

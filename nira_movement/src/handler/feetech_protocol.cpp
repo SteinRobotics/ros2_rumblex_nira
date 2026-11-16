@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <thread>
 
 namespace nira_movement {
 
@@ -16,6 +17,17 @@ CFeetechProtocol::CFeetechProtocol(std::shared_ptr<rclcpp::Node> node, const std
 
 CFeetechProtocol::~CFeetechProtocol() {
     closeConnection();
+}
+
+int CFeetechProtocol::dashboardRead(uint8_t id, uint8_t address, bool word) {
+    if (!is_connected_) return -1;
+    return word ? hlscl_.readWord(id, address) : hlscl_.readByte(id, address);
+}
+
+bool CFeetechProtocol::dashboardWrite(uint8_t id, uint8_t address, uint16_t value, bool word) {
+    if (!is_connected_) return false;
+    // Deliberately do not unlock EEPROM or retry a write.
+    return (word ? hlscl_.writeWord(id, address, value) : hlscl_.writeByte(id, address, value)) == 1;
 }
 
 bool CFeetechProtocol::triggerConnection() {
@@ -172,36 +184,61 @@ bool CFeetechProtocol::setPositionLimits(uint8_t id, uint16_t min_position, uint
     return r1 != -1 && r2 != -1;
 }
 
+bool CFeetechProtocol::readHardwareOffset(uint8_t id, int16_t& ticks) {
+    int raw = dashboardRead(id, HLSCL_OFS_L, true);
+    if (raw < 0 || (raw & 0x7fff) > 4095) return false;
+    ticks = (raw & 0x8000) ? -(raw & 0x7fff) : raw;
+    return true;
+}
+
+bool CFeetechProtocol::writeHardwareOffset(uint8_t id, int16_t ticks) {
+    if (!isConnected() || id > 253 || ticks < -4095 || ticks > 4095) return false;
+    // Never re-enable torque against a target expressed in the old coordinate frame.
+    if (!dashboardWrite(id, HLSCL_TORQUE_ENABLE, 0, false) ||
+        dashboardRead(id, HLSCL_TORQUE_ENABLE, false) != 0)
+        return false;
+    bool unlocked = dashboardWrite(id, HLSCL_LOCK, 0, false) && dashboardRead(id, HLSCL_LOCK, false) == 0;
+    bool written =
+        unlocked &&
+        dashboardWrite(id, HLSCL_OFS_L, ticks < 0 ? static_cast<uint16_t>(-ticks) | 0x8000 : ticks, true);
+    bool locked = dashboardWrite(id, HLSCL_LOCK, 1, false);
+    int16_t actual = 0;
+    return written && locked && dashboardRead(id, HLSCL_LOCK, false) == 1 && readHardwareOffset(id, actual) &&
+           actual == ticks;
+}
+
+bool CFeetechProtocol::calibrateHardwareOffset(uint8_t id) {
+    if (!isConnected() || id > 253) return false;
+    if (!dashboardWrite(id, HLSCL_TORQUE_ENABLE, 0, false) ||
+        dashboardRead(id, HLSCL_TORQUE_ENABLE, false) != 0)
+        return false;
+    bool unlocked = dashboardWrite(id, HLSCL_LOCK, 0, false) && dashboardRead(id, HLSCL_LOCK, false) == 0;
+    bool calibrated = unlocked && hlscl_.Recal(id) == 1;
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    // Relock even if the calibration acknowledgement was lost.
+    bool locked = dashboardWrite(id, HLSCL_LOCK, 1, false);
+    int16_t offset = 0;
+    int position = dashboardRead(id, HLSCL_PRESENT_POSITION_L, true);
+    return calibrated && locked && dashboardRead(id, HLSCL_LOCK, false) == 1 &&
+           readHardwareOffset(id, offset) && std::abs(position - 2048) <= 8;
+}
+
 bool CFeetechProtocol::getPositionOffset(uint8_t id, int8_t& deviation) {
-    if (!is_connected_) return false;
-    int ofs = hlscl_.readWord(id, HLSCL_OFS_L);
-    if (ofs != -1) {
-        if (ofs & (1 << 15)) {
-            ofs = -(ofs & ~(1 << 15));
-        }
-        double dev_deg = static_cast<double>(ofs) * (360.0 / 4096.0);
-        deviation = static_cast<int8_t>(std::round(dev_deg / 0.24));
-        return true;
-    }
-    return false;
+    int16_t ticks = 0;
+    if (!readHardwareOffset(id, ticks)) return false;
+    int value = std::lround(ticks * (360.0 / 4096.0) / 0.24);
+    if (value < -128 || value > 127) return false;
+    deviation = value;
+    return true;
 }
 
 bool CFeetechProtocol::setPositionOffset(uint8_t id, int8_t deviation) {
-    if (!is_connected_) return false;
-    double dev_deg = static_cast<double>(deviation) * 0.24;
-    int16_t ofs_counts = static_cast<int16_t>(std::round(dev_deg * (4096.0 / 360.0)));
-    uint16_t ofs_u16 = static_cast<uint16_t>(ofs_counts);
-    if (ofs_counts < 0) {
-        ofs_u16 = static_cast<uint16_t>(-ofs_counts) | (1 << 15);
-    }
-    hlscl_.unLockEprom(id);
-    int res = hlscl_.writeWord(id, HLSCL_OFS_L, ofs_u16);
-    hlscl_.LockEprom(id);
-    return res != -1;
+    return writeHardwareOffset(id, std::lround(deviation * 0.24 * (4096.0 / 360.0)));
 }
 
-bool CFeetechProtocol::savePositionOffset(uint8_t /*id*/) {
-    return true;
+bool CFeetechProtocol::savePositionOffset(uint8_t id) {
+    int16_t ticks = 0;
+    return readHardwareOffset(id, ticks) && writeHardwareOffset(id, ticks);
 }
 
 bool CFeetechProtocol::getMotorSpeed(uint8_t id, int16_t& speed) {

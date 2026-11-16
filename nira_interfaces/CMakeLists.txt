@@ -29,6 +29,8 @@ set(msg_files
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
+  "msg/ServoDashboardState.msg"
+  "srv/ServoDashboard.srv"
   DEPENDENCIES std_msgs geometry_msgs
 )
 

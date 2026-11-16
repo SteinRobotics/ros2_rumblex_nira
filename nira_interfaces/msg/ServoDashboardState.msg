@@ -1,0 +1,15 @@
+std_msgs/Header header
+string name
+uint8 id
+int32 position
+uint16 goal
+int32 velocity
+uint16 load
+float32 voltage
+uint8 temperature
+uint8 status
+uint16 minimum
+uint16 maximum
+uint16 speed
+uint8 acc
+uint8 baud_code
