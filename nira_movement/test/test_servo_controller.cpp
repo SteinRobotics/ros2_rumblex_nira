@@ -17,19 +17,19 @@ class ServoControllerTestAccess {
         controller.protocol_ = std::move(protocol);
     }
     static auto dashboard(CServoController& controller,
-                          const nira_interfaces::srv::ServoDashboard::Request& request) {
+                          const nira_interfaces::srv::ServoDashboard::Request& kRequest) {
         nira_interfaces::srv::ServoDashboard::Response response;
-        controller.dashboard(request, response);
+        controller.dashboard(kRequest, response);
         return response;
     }
-    static bool hasTimer(const CServoController& controller) {
-        return bool(controller.timer_);
+    static bool hasTimer(const CServoController& kController) {
+        return bool(kController.timer_);
     }
     static void status(CServoController& controller) {
         controller.onTimerStatus();
     }
-    static bool hasPublishers(const CServoController& controller) {
-        return bool(controller.pub_status_) && bool(controller.pub_angles_);
+    static bool hasPublishers(const CServoController& kController) {
+        return bool(kController.pub_status_) && bool(kController.pub_angles_);
     }
     static int ticks(CServoController& controller, double angle, int index) {
         return controller.angle_to_ticks(angle, index);
@@ -39,9 +39,9 @@ class ServoControllerTestAccess {
     }
 };
 
-class RecordingProtocol : public CServoProtocol {
+class RecordingProtocol : public CFeetechProtocol {
    public:
-    explicit RecordingProtocol(std::shared_ptr<rclcpp::Node> node) : CServoProtocol(node) {
+    explicit RecordingProtocol(std::shared_ptr<rclcpp::Node> node) : CFeetechProtocol(node, "") {
     }
     bool readHardwareOffset(uint8_t, int16_t& ticks) override {
         ticks = offset;
@@ -54,6 +54,9 @@ class RecordingProtocol : public CServoProtocol {
     bool calibrateHardwareOffset(uint8_t) override {
         offset = 123;
         return !fail;
+    }
+    bool isConnected() override {
+        return true;
     }
     int16_t offset = 0;
     int dashboardRead(uint8_t, uint8_t address, bool) override {
@@ -255,6 +258,41 @@ TEST_F(ServoControllerTest, DashboardHoldLimitsAndDiscovery) {
     q.operation = q.STATE;
     response = ServoControllerTestAccess::dashboard(*controller, q);
     EXPECT_EQ(response.outcome, response.REJECTED);
+}
+
+TEST_F(ServoControllerTest, DashboardRejectsUnsupportedProtocol) {
+    ServoControllerTestAccess::protocol(*controller, std::make_shared<CServoProtocol>(node));
+    nira_interfaces::srv::ServoDashboard::Request request;
+    request.name = "HEAD_YAW";
+    request.operation = request.STATE;
+    const auto kResponse = ServoControllerTestAccess::dashboard(*controller, request);
+    EXPECT_EQ(kResponse.outcome, kResponse.REJECTED);
+    EXPECT_NE(kResponse.detail.find("unsupported"), std::string::npos);
+}
+
+TEST_F(ServoControllerTest, DashboardRetainsConfirmedAddressAfterFeedbackFailure) {
+    class AddressProtocol : public CServoProtocol {
+       public:
+        explicit AddressProtocol(std::shared_ptr<rclcpp::Node> node) : CServoProtocol(node) {
+        }
+        void dashboard(uint8_t& id, const nira_interfaces::srv::ServoDashboard::Request& kRequest,
+                       nira_interfaces::srv::ServoDashboard::Response& response) override {
+            id = kRequest.new_id;
+            response.outcome = response.UNVERIFIED;
+            response.detail = "Address verified; subsequent feedback failed";
+        }
+    };
+    ServoControllerTestAccess::protocol(*controller, std::make_shared<AddressProtocol>(node));
+    nira_interfaces::srv::ServoDashboard::Request request;
+    request.name = "HEAD_YAW";
+    request.operation = request.ID;
+    request.new_id = 7;
+    auto response = ServoControllerTestAccess::dashboard(*controller, request);
+    EXPECT_EQ(response.outcome, response.UNVERIFIED);
+    EXPECT_EQ(response.state.header.stamp.sec, 0);
+    request.operation = request.LIST;
+    response = ServoControllerTestAccess::dashboard(*controller, request);
+    EXPECT_EQ(response.ids, (std::vector<uint8_t>{7}));
 }
 
 TEST_F(ServoControllerTest, SmallMovesUseOneTickRatherThanHalfDegreeSteps) {

@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 
+#include "nira_interfaces/srv/servo_dashboard.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 namespace nira_movement {
@@ -18,12 +19,13 @@ class CServoProtocol {
    public:
     explicit CServoProtocol(std::shared_ptr<rclcpp::Node> node) : node_(node) {
     }
-    // Raw dashboard registers; unsupported transports explicitly reject access.
-    virtual int dashboardRead(uint8_t, uint8_t, bool) {
-        return -1;
-    }
-    virtual bool dashboardWrite(uint8_t, uint8_t, uint16_t, bool) {
-        return false;
+    // The protocol adapter owns device-specific dashboard behavior. An ID is
+    // updated only after address readback succeeds, even if later feedback fails.
+    virtual void dashboard(uint8_t&, const nira_interfaces::srv::ServoDashboard::Request&,
+                           nira_interfaces::srv::ServoDashboard::Response& response) {
+        response = nira_interfaces::srv::ServoDashboard::Response{};
+        response.outcome = response.REJECTED;
+        response.detail = "Dashboard unsupported by this transport";
     }
     virtual ~CServoProtocol() = default;
 

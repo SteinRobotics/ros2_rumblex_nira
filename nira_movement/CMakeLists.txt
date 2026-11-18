@@ -25,12 +25,11 @@ find_package(yaml-cpp REQUIRED)
 set(SOURCES
   src/handler/servo_controller.cpp
   src/handler/servo_dashboard.cpp
+  src/handler/feetech_dashboard.cpp
   src/handler/feetech_protocol.cpp
-  src/handler/feetech/HLSCL.cpp
-  src/handler/feetech/SCS.cpp
-  src/handler/feetech/SCSCL.cpp
-  src/handler/feetech/SCSerial.cpp
-  src/handler/feetech/SMS_STS.cpp
+  src/handler/feetech/feetech_hls_servo.cpp
+  src/handler/feetech/feetech_packet_protocol.cpp
+  src/handler/feetech/feetech_serial_transport.cpp
   src/requester/requester.cpp
 )
 
@@ -103,9 +102,12 @@ if(BUILD_TESTING)
     NIRA_CONFIG_DIR="${CMAKE_CURRENT_SOURCE_DIR}/config"
     NIRA_ANATOMY_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../nira_description/config")
 
-  ament_add_gtest(test_scserial test/test_scserial.cpp)
-  if(TARGET test_scserial)
-    target_link_libraries(test_scserial nira_movement_core util)
+  ament_add_gtest(test_feetech_protocol test/test_feetech_protocol.cpp)
+  target_link_libraries(test_feetech_protocol nira_movement_core)
+
+  ament_add_gtest(test_feetech_serial_transport test/test_feetech_serial_transport.cpp)
+  if(TARGET test_feetech_serial_transport)
+    target_link_libraries(test_feetech_serial_transport nira_movement_core util)
   endif()
 
   ament_add_gtest(test_offline_visualization test/test_offline_visualization.cpp)

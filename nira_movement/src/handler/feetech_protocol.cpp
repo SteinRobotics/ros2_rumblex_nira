@@ -11,8 +11,8 @@
 
 namespace nira_movement {
 
-CFeetechProtocol::CFeetechProtocol(std::shared_ptr<rclcpp::Node> node, const std::string& device_name)
-    : CServoProtocol(node), device_name_(device_name) {
+CFeetechProtocol::CFeetechProtocol(std::shared_ptr<rclcpp::Node> node, const std::string& kDeviceName)
+    : CServoProtocol(node), device_name_(kDeviceName) {
 }
 
 CFeetechProtocol::~CFeetechProtocol() {
@@ -21,13 +21,13 @@ CFeetechProtocol::~CFeetechProtocol() {
 
 int CFeetechProtocol::dashboardRead(uint8_t id, uint8_t address, bool word) {
     if (!is_connected_) return -1;
-    return word ? hlscl_.readWord(id, address) : hlscl_.readByte(id, address);
+    return word ? hls_servo_.readWord(id, address) : hls_servo_.readByte(id, address);
 }
 
 bool CFeetechProtocol::dashboardWrite(uint8_t id, uint8_t address, uint16_t value, bool word) {
     if (!is_connected_) return false;
     // Deliberately do not unlock EEPROM or retry a write.
-    return (word ? hlscl_.writeWord(id, address, value) : hlscl_.writeByte(id, address, value)) == 1;
+    return (word ? hls_servo_.writeWord(id, address, value) : hls_servo_.writeByte(id, address, value)) == 1;
 }
 
 bool CFeetechProtocol::triggerConnection() {
@@ -35,7 +35,7 @@ bool CFeetechProtocol::triggerConnection() {
     RCLCPP_INFO(node_->get_logger(),
                 "CFeetechProtocol: Connecting to serial port %s with 115200 baud Rate...",
                 device_name_.c_str());
-    if (hlscl_.begin(115200, device_name_.c_str())) {
+    if (hls_servo_.begin(115200, device_name_.c_str())) {
         is_connected_ = true;
         RCLCPP_INFO(node_->get_logger(), "CFeetechProtocol: Connection successful");
         return true;
@@ -46,7 +46,7 @@ bool CFeetechProtocol::triggerConnection() {
 
 void CFeetechProtocol::closeConnection() {
     if (is_connected_) {
-        hlscl_.end();
+        hls_servo_.end();
         is_connected_ = false;
     }
 }
@@ -57,9 +57,10 @@ bool CFeetechProtocol::isConnected() {
 
 bool CFeetechProtocol::getServoID(uint8_t id, uint8_t& answer) {
     if (!is_connected_) return false;
-    int res = hlscl_.Ping(id);
-    if (res != -1) {
-        answer = static_cast<uint8_t>(res);
+    int res = hls_servo_.Ping(id);
+    if (res != -1 || hls_servo_.getLastError() == ERR_SERVO) {
+        // A valid error-status response still proves that this address is occupied.
+        answer = id;
         return true;
     }
     return false;
@@ -67,15 +68,18 @@ bool CFeetechProtocol::getServoID(uint8_t id, uint8_t& answer) {
 
 bool CFeetechProtocol::setServoID(uint8_t id, uint8_t new_id) {
     if (!is_connected_) return false;
-    hlscl_.unLockEprom(id);
-    int res = hlscl_.writeByte(id, HLSCL_ID, new_id);
-    hlscl_.LockEprom(new_id);
-    return res != -1;
+    if (hls_servo_.unLockEprom(id) != 1) {
+        hls_servo_.LockEprom(id);
+        return false;
+    }
+    int res = hls_servo_.writeByte(id, HLSCL_ID, new_id);
+    const int kLocked = hls_servo_.LockEprom(new_id);
+    return res == 1 && kLocked == 1;
 }
 
 bool CFeetechProtocol::getMode(uint8_t id, uint8_t& mode) {
     if (!is_connected_) return false;
-    int res = hlscl_.readByte(id, HLSCL_MODE);
+    int res = hls_servo_.readByte(id, HLSCL_MODE);
     if (res != -1) {
         mode = static_cast<uint8_t>(res);
         return true;
@@ -85,76 +89,59 @@ bool CFeetechProtocol::getMode(uint8_t id, uint8_t& mode) {
 
 bool CFeetechProtocol::setServoMode(uint8_t id) {
     if (!is_connected_) return false;
-    return hlscl_.ServoMode(id) != -1;
+    return hls_servo_.ServoMode(id) == 1;
 }
 
 bool CFeetechProtocol::setMotorMode(uint8_t id, int16_t speed) {
     if (!is_connected_) return false;
-    if (hlscl_.WheelMode(id) == -1) return false;
-    return hlscl_.WriteSpe(id, speed, 50, 500) != -1;
+    if (hls_servo_.WheelMode(id) != 1) return false;
+    return hls_servo_.WriteSpe(id, speed, 50, 500) == 1;
 }
 
 bool CFeetechProtocol::setTorque(uint8_t id, bool active) {
     if (!is_connected_) return false;
-    return hlscl_.EnableTorque(id, active ? 1 : 0) != -1;
+    return hls_servo_.EnableTorque(id, active ? 1 : 0) == 1;
 }
 
 bool CFeetechProtocol::setPosition(uint8_t id, uint16_t pos, uint16_t time_ms) {
-    if (!is_connected_) return false;
-    int current_pos = hlscl_.ReadPos(id);
-    if (current_pos == -1) {
-        current_pos = 2048;  // neutral
-    }
-    uint16_t target_pos = convertTicksToFeetech(pos);
-    uint16_t delta = std::abs(current_pos - static_cast<int>(target_pos));
-
-    uint16_t speed = 0;
-    if (time_ms > 0 && delta > 0) {
-        speed = static_cast<uint16_t>(std::round((delta * 20.0) / time_ms));
-        if (speed < 1) speed = 1;
-        if (speed > 250) speed = 250;
-    } else {
-        speed = 50;  // default safe speed
-    }
-
-    return hlscl_.WritePosEx(id, static_cast<s16>(target_pos), speed, 50, 500) != -1;
+    return writePosition(id, pos, time_ms, false);
+}
+bool CFeetechProtocol::setRegPos(uint8_t id, uint16_t pos, uint16_t time_ms) {
+    return writePosition(id, pos, time_ms, true);
 }
 
-bool CFeetechProtocol::setRegPos(uint8_t id, uint16_t pos, uint16_t time_ms) {
-    if (!is_connected_) return false;
-    int current_pos = hlscl_.ReadPos(id);
-    if (current_pos == -1) {
-        current_pos = 2048;  // neutral
-    }
+bool CFeetechProtocol::writePosition(uint8_t id, uint16_t pos, uint16_t time_ms, bool deferred) {
+    if (!isConnected() || id > 253) return false;
+    const int kCurrentPos = dashboardRead(id, HLSCL_PRESENT_POSITION_L, true);
+    if (kCurrentPos < 0 || kCurrentPos > 4095) return false;
     uint16_t target_pos = convertTicksToFeetech(pos);
-    uint16_t delta = std::abs(current_pos - static_cast<int>(target_pos));
+    uint16_t delta = std::abs(kCurrentPos - static_cast<int>(target_pos));
 
     uint16_t speed = 0;
     if (time_ms > 0 && delta > 0) {
-        speed = static_cast<uint16_t>(std::round((delta * 20.0) / time_ms));
-        if (speed < 1) speed = 1;
-        if (speed > 250) speed = 250;
+        speed = static_cast<uint16_t>(std::clamp(std::round((delta * 20.0) / time_ms), 1.0, 250.0));
     } else {
         speed = 50;  // default safe speed
     }
 
-    return hlscl_.RegWritePosEx(id, static_cast<s16>(target_pos), speed, 50, 500) != -1;
+    return (deferred ? hls_servo_.RegWritePosEx(id, static_cast<s16>(target_pos), speed, 50, 500)
+                     : hls_servo_.WritePosEx(id, static_cast<s16>(target_pos), speed, 50, 500)) == 1;
 }
 
 bool CFeetechProtocol::actionStart(uint8_t id) {
     if (!is_connected_) return false;
-    return hlscl_.RegWriteAction(id) != -1;
+    return hls_servo_.RegWriteAction(id) == 1;
 }
 
 bool CFeetechProtocol::moveStop(uint8_t id) {
     if (!is_connected_) return false;
-    return hlscl_.WriteSpe(id, 0, 50, 500) != -1;
+    return hls_servo_.WriteSpe(id, 0, 50, 500) == 1;
 }
 
 bool CFeetechProtocol::getPosition(uint8_t id, int16_t& pos) {
-    if (!is_connected_) return false;
-    int res = hlscl_.ReadPos(id);
-    if (res != -1) {
+    if (!isConnected() || id > 253) return false;
+    int res = dashboardRead(id, HLSCL_PRESENT_POSITION_L, true);
+    if (res >= 0 && res <= 4095) {
         pos = static_cast<int16_t>(convertFeetechToTicks(static_cast<uint16_t>(res)));
         return true;
     }
@@ -163,8 +150,8 @@ bool CFeetechProtocol::getPosition(uint8_t id, int16_t& pos) {
 
 bool CFeetechProtocol::getPositionLimits(uint8_t id, uint16_t& min_position, uint16_t& max_position) {
     if (!is_connected_) return false;
-    int min_pos = hlscl_.readWord(id, HLSCL_MIN_ANGLE_LIMIT_L);
-    int max_pos = hlscl_.readWord(id, HLSCL_MAX_ANGLE_LIMIT_L);
+    int min_pos = hls_servo_.readWord(id, HLSCL_MIN_ANGLE_LIMIT_L);
+    int max_pos = hls_servo_.readWord(id, HLSCL_MAX_ANGLE_LIMIT_L);
     if (min_pos != -1 && max_pos != -1) {
         min_position = convertFeetechToTicks(static_cast<uint16_t>(min_pos));
         max_position = convertFeetechToTicks(static_cast<uint16_t>(max_pos));
@@ -177,17 +164,20 @@ bool CFeetechProtocol::setPositionLimits(uint8_t id, uint16_t min_position, uint
     if (!is_connected_) return false;
     uint16_t min_counts = convertTicksToFeetech(min_position);
     uint16_t max_counts = convertTicksToFeetech(max_position);
-    hlscl_.unLockEprom(id);
-    int r1 = hlscl_.writeWord(id, HLSCL_MIN_ANGLE_LIMIT_L, min_counts);
-    int r2 = hlscl_.writeWord(id, HLSCL_MAX_ANGLE_LIMIT_L, max_counts);
-    hlscl_.LockEprom(id);
-    return r1 != -1 && r2 != -1;
+    if (hls_servo_.unLockEprom(id) != 1) {
+        hls_servo_.LockEprom(id);
+        return false;
+    }
+    int r1 = hls_servo_.writeWord(id, HLSCL_MIN_ANGLE_LIMIT_L, min_counts);
+    int r2 = hls_servo_.writeWord(id, HLSCL_MAX_ANGLE_LIMIT_L, max_counts);
+    const int kLocked = hls_servo_.LockEprom(id);
+    return r1 == 1 && r2 == 1 && kLocked == 1;
 }
 
 bool CFeetechProtocol::readHardwareOffset(uint8_t id, int16_t& ticks) {
     int raw = dashboardRead(id, HLSCL_OFS_L, true);
     if (raw < 0 || (raw & 0x7fff) > 4095) return false;
-    ticks = (raw & 0x8000) ? -(raw & 0x7fff) : raw;
+    ticks = hls::decodeSigned(raw);
     return true;
 }
 
@@ -198,9 +188,7 @@ bool CFeetechProtocol::writeHardwareOffset(uint8_t id, int16_t ticks) {
         dashboardRead(id, HLSCL_TORQUE_ENABLE, false) != 0)
         return false;
     bool unlocked = dashboardWrite(id, HLSCL_LOCK, 0, false) && dashboardRead(id, HLSCL_LOCK, false) == 0;
-    bool written =
-        unlocked &&
-        dashboardWrite(id, HLSCL_OFS_L, ticks < 0 ? static_cast<uint16_t>(-ticks) | 0x8000 : ticks, true);
+    bool written = unlocked && dashboardWrite(id, HLSCL_OFS_L, hls::encodeSigned(ticks), true);
     bool locked = dashboardWrite(id, HLSCL_LOCK, 1, false);
     int16_t actual = 0;
     return written && locked && dashboardRead(id, HLSCL_LOCK, false) == 1 && readHardwareOffset(id, actual) &&
@@ -213,7 +201,7 @@ bool CFeetechProtocol::calibrateHardwareOffset(uint8_t id) {
         dashboardRead(id, HLSCL_TORQUE_ENABLE, false) != 0)
         return false;
     bool unlocked = dashboardWrite(id, HLSCL_LOCK, 0, false) && dashboardRead(id, HLSCL_LOCK, false) == 0;
-    bool calibrated = unlocked && hlscl_.Recal(id) == 1;
+    bool calibrated = unlocked && hls_servo_.Recal(id) == 1;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     // Relock even if the calibration acknowledgement was lost.
     bool locked = dashboardWrite(id, HLSCL_LOCK, 1, false);
@@ -243,35 +231,27 @@ bool CFeetechProtocol::savePositionOffset(uint8_t id) {
 
 bool CFeetechProtocol::getMotorSpeed(uint8_t id, int16_t& speed) {
     if (!is_connected_) return false;
-    int res = hlscl_.ReadSpeed(id);
+    int res = hls_servo_.readWord(id, HLSCL_PRESENT_SPEED_L);
     if (res != -1) {
-        speed = static_cast<int16_t>(res);
+        speed = static_cast<int16_t>(hls::decodeSigned(res));
         return true;
     }
     return false;
 }
 
-bool CFeetechProtocol::getVoltage(uint8_t id, uint16_t& m_v) {
+bool CFeetechProtocol::getVoltage(uint8_t id, uint16_t& mv) {
     if (!is_connected_) return false;
-    int res = hlscl_.ReadVoltage(id);
+    int res = hls_servo_.ReadVoltage(id);
     if (res != -1) {
-        m_v = static_cast<uint16_t>(res * 100);
+        mv = static_cast<uint16_t>(res * 100);
         return true;
     }
-    return false;
-}
-
-bool CFeetechProtocol::getVoltageLimits(uint8_t /*id*/, uint16_t& /*m_vmin*/, uint16_t& /*m_vmax*/) {
-    return false;
-}
-
-bool CFeetechProtocol::setVoltageLimits(uint8_t /*id*/, uint16_t /*m_vmin*/, uint16_t /*m_vmax*/) {
     return false;
 }
 
 bool CFeetechProtocol::getTemperature(uint8_t id, uint8_t& deg_temp) {
     if (!is_connected_) return false;
-    int res = hlscl_.ReadTemper(id);
+    int res = hls_servo_.ReadTemper(id);
     if (res != -1) {
         deg_temp = static_cast<uint8_t>(res);
         return true;
@@ -279,33 +259,13 @@ bool CFeetechProtocol::getTemperature(uint8_t id, uint8_t& deg_temp) {
     return false;
 }
 
-bool CFeetechProtocol::getMaxTemperatureLimit(uint8_t /*id*/, uint8_t& /*deg_limit*/) {
-    return false;
-}
-
-bool CFeetechProtocol::setMaxTemperatureLimit(uint8_t /*id*/, uint8_t /*deg_limit*/) {
-    return false;
-}
-
-bool CFeetechProtocol::isLedOn(uint8_t /*id*/) {
-    return false;
-}
-
-bool CFeetechProtocol::setLed(uint8_t /*id*/, bool /*on*/) {
-    return false;
-}
-
 bool CFeetechProtocol::getLedErrcode(uint8_t id, uint8_t& lederrcode) {
     if (!is_connected_) return false;
-    int res = hlscl_.Ping(id);
-    if (res != -1) {
-        lederrcode = hlscl_.getState();
+    int res = hls_servo_.Ping(id);
+    if (res != -1 || hls_servo_.getLastError() == ERR_SERVO) {
+        lederrcode = hls_servo_.getState();
         return true;
     }
-    return false;
-}
-
-bool CFeetechProtocol::flashLedErrCode(uint8_t /*id*/, uint8_t /*code*/) {
     return false;
 }
 
@@ -323,6 +283,25 @@ uint16_t CFeetechProtocol::convertFeetechToTicks(uint16_t feetech_ticks) const {
     if (ticks < 0.0) ticks = 0.0;
     if (ticks > 1000.0) ticks = 1000.0;
     return static_cast<uint16_t>(std::round(ticks));
+}
+
+std::string CFeetechProtocol::lastErrorDetail() const {
+    switch (hls_servo_.getLastError()) {
+        case ERR_NO_REPLY:
+            return "transaction timed out";
+        case ERR_IO:
+            return "serial I/O failed or disconnected";
+        case ERR_CRC_CMP:
+            return "response checksum mismatch";
+        case ERR_SLAVE_ID:
+            return "response came from a different servo";
+        case ERR_BUFF_LEN:
+            return "invalid packet length or buffer size";
+        case ERR_SERVO:
+            return "servo reported status " + std::to_string(hls_servo_.getState());
+        default:
+            return "register access failed";
+    }
 }
 
 }  // namespace nira_movement

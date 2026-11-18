@@ -8,18 +8,22 @@
 #include <memory>
 #include <string>
 
-#include "handler/feetech/HLSCL.h"
+#include "handler/feetech/feetech_hls_servo.hpp"
 #include "handler/servo_protocol.hpp"
 
 namespace nira_movement {
 
 class CFeetechProtocol : public CServoProtocol {
    public:
-    CFeetechProtocol(std::shared_ptr<rclcpp::Node> node, const std::string& device_name);
+    CFeetechProtocol(std::shared_ptr<rclcpp::Node> node, const std::string& kDeviceName);
     ~CFeetechProtocol() override;
 
-    int dashboardRead(uint8_t id, uint8_t address, bool word) override;
-    bool dashboardWrite(uint8_t id, uint8_t address, uint16_t value, bool word) override;
+    void dashboard(uint8_t& confirmed_id, const nira_interfaces::srv::ServoDashboard::Request& kRequest,
+                   nira_interfaces::srv::ServoDashboard::Response& response) override;
+
+    // Register access is an HLS implementation detail and a test seam.
+    virtual int dashboardRead(uint8_t id, uint8_t address, bool word);
+    virtual bool dashboardWrite(uint8_t id, uint8_t address, uint16_t value, bool word);
     bool triggerConnection() override;
     void closeConnection() override;
     bool isConnected() override;
@@ -47,27 +51,21 @@ class CFeetechProtocol : public CServoProtocol {
 
     bool getMotorSpeed(uint8_t id, int16_t& speed) override;
 
-    bool getVoltage(uint8_t id, uint16_t& m_v) override;
-    bool getVoltageLimits(uint8_t id, uint16_t& m_vmin, uint16_t& m_vmax) override;
-    bool setVoltageLimits(uint8_t id, uint16_t m_vmin, uint16_t m_vmax) override;
+    bool getVoltage(uint8_t id, uint16_t& mv) override;
 
     bool getTemperature(uint8_t id, uint8_t& deg_temp) override;
-    bool getMaxTemperatureLimit(uint8_t id, uint8_t& deg_limit) override;
-    bool setMaxTemperatureLimit(uint8_t id, uint8_t deg_limit) override;
-
-    bool isLedOn(uint8_t id) override;
-    bool setLed(uint8_t id, bool on) override;
 
     bool getLedErrcode(uint8_t id, uint8_t& lederrcode) override;
-    bool flashLedErrCode(uint8_t id, uint8_t code) override;
 
    private:
+    std::string lastErrorDetail() const;
+    bool writePosition(uint8_t id, uint16_t pos, uint16_t time_ms, bool deferred);
     uint16_t convertTicksToFeetech(uint16_t ticks) const;
     uint16_t convertFeetechToTicks(uint16_t feetech_ticks) const;
 
     std::string device_name_;
     bool is_connected_ = false;
-    HLSCL hlscl_;
+    FeetechHlsServo hls_servo_;
 };
 
 }  // namespace nira_movement
