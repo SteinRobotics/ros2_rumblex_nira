@@ -20,6 +20,7 @@ using namespace brain;
 using namespace std::chrono_literals;
 class MovementHandlerTest : public ::testing::Test {
    protected:
+    virtual void configurePreview(std::vector<rclcpp::Parameter>&) {}
     void SetUp() override {
         rclcpp::init(0, nullptr);
         rclcpp::NodeOptions options;
@@ -28,6 +29,7 @@ class MovementHandlerTest : public ::testing::Test {
         parameters.insert(parameters.end(), extra.begin(), extra.end());
         const auto leveling = test_helpers::levelTorsoParameters();
         parameters.insert(parameters.end(), leveling.begin(), leveling.end());
+        configurePreview(parameters);
         options.parameter_overrides(parameters);
         node = std::make_shared<rclcpp::Node>("movement_handler_test", "/movement_handler_test", options);
         executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();

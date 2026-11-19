@@ -2,6 +2,48 @@
 #include "parser/sequence_parser.hpp"
 
 namespace {
+class FaceMovementTest : public MovementHandlerTest {
+    void configurePreview(std::vector<rclcpp::Parameter>& params) override {
+        params.insert(params.end(), {{"face_tracking.desktop_preview", true},
+                                     {"face_tracking.max_yaw_deg", 30.0},
+                                     {"face_tracking.max_pitch_deg", 20.0},
+                                     {"face_tracking.max_speed_deg_s", 25.0},
+                                     {"face_tracking.acceleration_deg_s2", 60.0},
+                                     {"face_tracking.gain", 3.0},
+                                     {"face_tracking.deadband_deg", 0.5}});
+    }
+};
+
+TEST_F(FaceMovementTest, PublishesCoordinatedPoseWithPlantedFeetAndHoldsOnLoss) {
+    auto target_pub = node->create_publisher<nira_interfaces::msg::FaceTarget>("perception/face_target", 1);
+    auto seed = initialPose();
+    seed.torso_pose.position.x = 0.002;
+    seed.head_orientation.pitch = 0.0;
+    feedback->publish(seed);
+    pump(150ms);
+    nira_interfaces::msg::FaceTarget face;
+    face.header.frame_id = "desktop_camera_optical_frame";
+    face.valid = face.roll_valid = true;
+    face.confidence = 0.9;
+    face.x_error = -0.5;
+    face.roll_rad = 0.12;
+    for (int i = 0; i < 20; ++i) {
+        face.header.stamp = node->now();
+        target_pub->publish(face);
+        pump(80ms);
+    }
+    ASSERT_FALSE(poses.empty());
+    EXPECT_DOUBLE_EQ(poses.back().torso_pose.orientation.yaw, 10.0);
+    EXPECT_GT(poses.back().head_orientation.yaw, 0.0);
+    EXPECT_GT(poses.back().torso_pose.orientation.roll, 0.0);
+    EXPECT_EQ(poses.back().toe_positions, seed.toe_positions);
+    EXPECT_EQ(poses.back().torso_pose.position, seed.torso_pose.position);
+    pump(350ms);
+    const auto count = poses.size();
+    pump(150ms);
+    EXPECT_EQ(poses.size(), count);
+}
+
 TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {
     request(MovementRequest::SEQUENCE_STAND_UP, 0.5);
     pump(700ms);

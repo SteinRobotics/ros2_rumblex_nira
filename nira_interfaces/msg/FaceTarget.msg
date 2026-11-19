@@ -10,3 +10,7 @@ float64 x_error
 float64 y_error
 # True only with matching measured camera calibration; false for desktop FOV approximation.
 bool calibrated
+# Eye-line tilt in radians, positive clockwise in the unmirrored source image.
+# Ignore roll_rad when roll_valid is false.
+bool roll_valid
+float64 roll_rad

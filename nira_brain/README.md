@@ -37,10 +37,12 @@ unchanged. See [MOVEMENT.md](MOVEMENT.md) for the motion pipeline and build setu
 ## Offline face preview
 
 Nira's desktop test launch enables `face_tracking.desktop_preview` in the brain.
-`FacePreview` reads timestamped face rays and produces bounded absolute yaw/pitch
-for the fixed host camera. `CMovement` merges the head into its existing pose
-publication while idle; it remains the sole brain writer of `/cmd_movement`.
-No preview targets modify torso or toe positions. Missing observations hold pose.
+For the fixed host camera, the torso takes the first 10° of yaw and pitch
+independently, and the head takes the remaining angle within its configured
+limits. Torso roll mirrors the tracked face’s eye-line tilt up to 10°.
+`CMovement` publishes these orientations together while idle, preserving torso
+translation and toe positions. Missing observations hold the pose. If only
+the eye-line measurement is unavailable, yaw and pitch continue tracking.
 Any movement request, nonzero velocity request, or cancellation disables preview;
 `/brain/set_face_tracking` explicitly re-enables it once the operator is ready.
 

@@ -11,7 +11,15 @@ namespace nira_perception_face {
 struct Detection {
     cv::Rect2f box;
     float confidence;
+    cv::Point2f right_eye{}, left_eye{};  // Subject's anatomical right and left.
 };
+
+inline std::optional<double> eyeLineRoll(cv::Point2f right_eye, cv::Point2f left_eye) {
+    const auto delta = left_eye - right_eye;
+    if (!std::isfinite(delta.x) || !std::isfinite(delta.y) || (delta.x == 0 && delta.y == 0))
+        return std::nullopt;
+    return std::atan2(delta.y, delta.x);
+}
 
 inline bool validDetection(const Detection& d) {
     return std::isfinite(d.box.x) && std::isfinite(d.box.y) && std::isfinite(d.box.width) &&

@@ -29,7 +29,7 @@ host capture-return time; they are not exposure timestamps.
 Images older than 300 ms, non-finite data, and out-of-order timestamps are rejected.
 No images or identities are stored.
 
-For a laptop camera and offline head visualization:
+For a laptop camera and offline torso and head visualization:
 
 ```bash
 ros2 launch nira_bringup test_launch.py

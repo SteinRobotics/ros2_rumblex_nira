@@ -117,6 +117,12 @@ class FaceDetector : public rclcpp::Node {
                 d.box.width *= static_cast<float>(bgr.cols) / resized.cols;
                 d.box.y *= static_cast<float>(bgr.rows) / resized.rows;
                 d.box.height *= static_cast<float>(bgr.rows) / resized.rows;
+                const auto landmark = [&](int column) {
+                    return cv::Point2f(faces.at<float>(row, column) * bgr.cols / resized.cols,
+                                       faces.at<float>(row, column + 1) * bgr.rows / resized.rows);
+                };
+                d.right_eye = landmark(4);
+                d.left_eye = landmark(6);
                 if (nira_perception_face::validDetection(d) && d.box.width >= minimum_ &&
                     d.box.height >= minimum_)
                     detections.push_back(d);
@@ -135,10 +141,17 @@ class FaceDetector : public rclcpp::Node {
                     (info_->distortion_model == "plumb_bob" ||
                      info_->distortion_model == "rational_polynomial") &&
                     (info_->d.size() == 5 || info_->d.size() == 8);
+                auto roll = nira_perception_face::eyeLineRoll(chosen->right_eye, chosen->left_eye);
                 if (calibrated) {
                     cv::Mat k(3, 3, CV_64F, const_cast<double*>(info_->k.data()));
                     std::vector<cv::Point2f> rays;
-                    cv::undistortPoints(std::vector<cv::Point2f>{centre}, rays, k, info_->d);
+                    std::vector<cv::Point2f> points{centre};
+                    if (roll) {
+                        points.push_back(chosen->right_eye);
+                        points.push_back(chosen->left_eye);
+                    }
+                    cv::undistortPoints(points, rays, k, info_->d);
+                    if (roll) roll = nira_perception_face::eyeLineRoll(rays[1], rays[2]);
                     target.x_error = rays[0].x;
                     target.y_error = rays[0].y;
                 } else if (approximate_) {
@@ -146,6 +159,8 @@ class FaceDetector : public rclcpp::Node {
                     target.x_error = (centre.x - bgr.cols / 2.0) / focal;
                     target.y_error = (centre.y - bgr.rows / 2.0) / focal;
                 }
+                target.roll_valid = roll.has_value();
+                target.roll_rad = roll.value_or(0.0);
                 target.calibrated = calibrated;
                 target.valid = (calibrated || approximate_) && std::isfinite(target.x_error) &&
                                std::isfinite(target.y_error);

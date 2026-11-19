@@ -147,11 +147,16 @@ void CMovement::update() {
     if (initialized_) {
         const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_, elapsed_s);
         updateRequestCompletion();
-        if (const auto head =
-                face_preview_->update(pose_model_->getHeadOrientation(), elapsed_s,
-                                      gait_controller_->motionStopped() &&
-                                          !gait_controller_->hasPendingGait() && !tracked_request_)) {
-            head_ = *head;
+        auto torso = pose_model_->getTorsoPose();
+        if (const auto preview = face_preview_->update(
+                {torso.orientation, pose_model_->getHeadOrientation()}, elapsed_s,
+                gait_controller_->motionStopped() && !gait_controller_->hasPendingGait() && !tracked_request_)) {
+            if (torso.orientation != preview->torso) {
+                torso.orientation = preview->torso;
+                pose_model_->moveTorso(pose_model_->getToePositions(), torso);
+            }
+            torso_ = torso;
+            head_ = preview->head;
             pose_model_->setHeadOrientation(head_);
         }
         auto pose = bodyPose(*pose_model_);

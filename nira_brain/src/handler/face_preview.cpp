@@ -29,6 +29,14 @@ FacePreview::FacePreview(const std::shared_ptr<rclcpp::Node>& node) : node_(node
     if (max_yaw_ > node_->get_parameter("gait.generic.head_max_yaw_deg").as_double() ||
         max_pitch_ > node_->get_parameter("gait.generic.head_max_pitch_deg").as_double())
         throw std::invalid_argument("Face preview limits exceed robot head limits");
+    const auto torsoLimit = [&](const char* key) {
+        const auto limit = node_->get_parameter(key).as_double();
+        if (!std::isfinite(limit) || limit < 0) throw std::invalid_argument(key);
+        return std::min(10.0, limit);
+    };
+    torso_yaw_ = torsoLimit("gait.watch.torso_max_yaw_deg");
+    torso_pitch_ = torsoLimit("gait.generic.torso_max_pitch_deg");
+    torso_roll_ = torsoLimit("gait.generic.torso_max_roll_deg");
     enabled_ = true;
     status_pub_ = node_->create_publisher<std_msgs::msg::String>("brain/face_tracking_status",
                                                                  rclcpp::QoS(1).transient_local());
@@ -56,13 +64,13 @@ FacePreview::FacePreview(const std::shared_ptr<rclcpp::Node>& node) : node_(node
             enabled_ = request->data;
             target_.reset();
             last_stamp_ = 0;
-            yaw_velocity_ = pitch_velocity_ = 0.0 * deg / s;
+            resetVelocities();
             response->success = true;
             response->message =
                 enabled_ ? "Offline preview enabled; waiting for idle pose and fresh face" : "Disabled";
             status(response->message);
         });
-    status("ACQUIRING: offline head preview");
+    status("ACQUIRING: offline face preview");
 }
 
 void FacePreview::status(const std::string& value) {
@@ -73,21 +81,27 @@ void FacePreview::status(const std::string& value) {
     status_pub_->publish(message);
 }
 
+void FacePreview::resetVelocities() {
+    yaw_velocity_ = pitch_velocity_ = roll_velocity_ = 0.0 * deg / s;
+    torso_yaw_velocity_ = torso_pitch_velocity_ = 0.0 * deg / s;
+}
+
 void FacePreview::suspend() {
     if (!preview_) return;
     enabled_ = false;
     target_.reset();
-    yaw_velocity_ = pitch_velocity_ = 0.0 * deg / s;
+    resetVelocities();
     status("DISABLED: manual/sequence/safety override; re-enable explicitly when ready");
 }
 
-std::optional<COrientation> FacePreview::update(const COrientation& current, units::Duration dt, bool idle) {
+std::optional<FacePreviewPose> FacePreview::update(const FacePreviewPose& current, units::Duration dt,
+                                                   bool idle) {
     const bool fresh =
         target_ && (node_->now() - rclcpp::Time(target_->header.stamp)).seconds() >= -0.05 &&
         (node_->now() - rclcpp::Time(target_->header.stamp)).seconds() <= 0.3 &&
         std::chrono::duration<double>(std::chrono::steady_clock::now() - received_).count() <= 0.3;
     if (!active() || !idle || !fresh) {
-        yaw_velocity_ = pitch_velocity_ = 0.0 * deg / s;
+        resetVelocities();
         if (active()) status(idle ? "LOST: waiting for fresh face" : "INHIBITED: pose is not idle");
         return std::nullopt;
     }
@@ -97,10 +111,15 @@ std::optional<COrientation> FacePreview::update(const COrientation& current, uni
     const units::Angle yaw = -std::atan(target_->x_error) * rad;
     const units::Angle pitch = std::atan2(target_->y_error, std::hypot(1.0, target_->x_error)) * rad;
     const auto step = [this, dt](units::Angle actual, units::Angle desired, double limit,
-                                 units::AngularVelocity& velocity) -> units::Angle {
+                                 units::AngularVelocity& velocity, bool settle_exactly = false) -> units::Angle {
         desired = std::clamp(desired, -limit * deg, limit * deg);
         const auto error = desired - actual;
-        if (abs(error) <= deadband_ * deg) {
+        if (settle_exactly && abs(error) <= std::min(max_speed_ * deg / s * dt,
+                                                     acceleration_ * deg / (s * s) * dt * dt)) {
+            velocity = 0.0 * deg / s;
+            return desired;
+        }
+        if (!settle_exactly && abs(error) <= deadband_ * deg) {
             velocity = 0.0 * deg / s;
             return actual;
         }
@@ -113,10 +132,46 @@ std::optional<COrientation> FacePreview::update(const COrientation& current, uni
             result = desired;
             velocity = 0.0 * deg / s;
         }
-        return std::clamp(result, -limit * deg, limit * deg);
+        // A preceding manual pose may exceed the preview travel. Return at the normal slew rate.
+        return std::clamp(result, std::min(actual, -limit * deg), std::max(actual, limit * deg));
     };
-    COrientation result(0.0 * deg, step(current.pitch, pitch, max_pitch_, pitch_velocity_),
-                        step(current.yaw, yaw, max_yaw_, yaw_velocity_));
+    FacePreviewPose result;
+    const auto follow = [&](units::Angle torso, units::Angle head, units::Angle desired, double torso_limit,
+                            double head_limit, units::AngularVelocity& velocity,
+                            units::AngularVelocity& torso_velocity, units::Angle& next_torso,
+                            units::Angle& next_head) {
+        const auto torsoShare = [&](units::Angle angle) {
+            return std::clamp(angle, -torso_limit * deg, torso_limit * deg);
+        };
+        const units::Angle combined = torso + head;
+        if (abs(torso - torsoShare(combined)) > 1e-8 * deg) {
+            // Recover from a manual pose by positioning the torso before using the head.
+            const auto target_torso = torsoShare(desired);
+            next_torso = step(torso, target_torso, torso_limit, torso_velocity, true);
+            auto target_head = desired - target_torso;
+            if (next_torso != target_torso) {
+                // Allow an existing head offset to unwind while the torso catches up.
+                const auto neutral = 0.0 * deg;
+                target_head = std::clamp(head, std::min(neutral, target_head), std::max(neutral, target_head));
+            }
+            next_head = step(head, target_head, head_limit, velocity, true);
+            return;
+        }
+        torso_velocity = 0.0 * deg / s;
+        const auto next = step(combined, desired, torso_limit + head_limit, velocity);
+        next_torso = torsoShare(next);
+        next_head = next - next_torso;
+    };
+    follow(current.torso.yaw, current.head.yaw, yaw, torso_yaw_, max_yaw_, yaw_velocity_,
+           torso_yaw_velocity_, result.torso.yaw, result.head.yaw);
+    follow(current.torso.pitch, current.head.pitch, pitch, torso_pitch_, max_pitch_, pitch_velocity_,
+           torso_pitch_velocity_, result.torso.pitch, result.head.pitch);
+    if (target_->roll_valid && std::isfinite(target_->roll_rad)) {
+        result.torso.roll = step(current.torso.roll, target_->roll_rad * rad, torso_roll_, roll_velocity_);
+    } else {
+        result.torso.roll = current.torso.roll;
+        roll_velocity_ = 0.0 * deg / s;
+    }
     status(target_->calibrated ? "TRACKING: offline calibrated preview"
                                : "TRACKING: offline approximate FOV");
     return result;
