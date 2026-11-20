@@ -109,3 +109,30 @@ def test_sequence_publisher_uses_exact_name():
     publisher.publish.assert_called_once()
     message = publisher.publish.call_args.args[0]
     assert message.data == 'dance_standard'
+
+
+@pytest.mark.parametrize('button', ['a', 'b'])
+def test_physical_short_taps_survive_one_poll_interval(gui, button):
+    from unittest.mock import Mock
+    from nira_interfaces.msg import JoystickRequest
+    from rclpy.time import Time
+    from nira_teleop.node_teleop import NodeTeleop
+
+    node = Mock(spec=NodeTeleop)
+    node.msg = JoystickRequest()
+    node.button_press_time = {button.upper(): None}
+    node.layout = NodeTeleop.generic_layout['Sony PLAYSTATION(R)3 Controller']
+    node.button_debounce_duration_s = NodeTeleop.button_debounce_duration_s
+    node.joystick = Mock()
+    node.joystick.get_instance_id.return_value = 3
+    node.joystick.get_button.return_value = False  # Both taps finished before polling.
+    node.get_clock.return_value.now.return_value = Time(seconds=1)
+    node.debounce_button.side_effect = lambda *args: NodeTeleop.debounce_button(node, *args)
+    node._set_button_state.side_effect = lambda *args: NodeTeleop._set_button_state(node, *args)
+    index = node.layout['button'][button.upper()]
+    for event_type in [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP] * 2:
+        event = pygame.event.Event(event_type, button=index, instance_id=3)
+        assert NodeTeleop.debounce_buttons(node, event)
+        assert getattr(node.msg, f'button_{button}') == (event_type == pygame.JOYBUTTONUP)
+    assert not NodeTeleop.debounce_buttons(node, None)
+    assert not getattr(node.msg, f'button_{button}')

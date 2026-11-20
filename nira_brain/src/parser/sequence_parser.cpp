@@ -116,6 +116,8 @@ bool CSequenceParser::parseSingleSequence(const YAML::Node& j) {
         const auto& triggerNode = j["trigger"];
         if (triggerNode["joystick"] && triggerNode["joystick"].IsScalar()) {
             trigger.joystick = triggerNode["joystick"].as<std::string>();
+            if (trigger.joystick == "button_a" || trigger.joystick == "button_b")
+                throw std::runtime_error("Controller A and B are reserved for pose overlays");
         }
         if (triggerNode["voice"] && triggerNode["voice"].IsScalar()) {
             trigger.voice = triggerNode["voice"].as<std::string>();
@@ -184,8 +186,6 @@ std::optional<std::reference_wrapper<const Sequence>> CSequenceParser::getSequen
         const std::string& joystickTrigger = trigger->second.joystick;
 
         // Match button triggers
-        if (joystickTrigger == "button_a" && msg.button_a) return std::cref(sequence);
-        if (joystickTrigger == "button_b" && msg.button_b) return std::cref(sequence);
         if (joystickTrigger == "button_x" && msg.button_x) return std::cref(sequence);
         if (joystickTrigger == "button_y" && msg.button_y) return std::cref(sequence);
         if (joystickTrigger == "button_l1" && msg.button_l1) return std::cref(sequence);

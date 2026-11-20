@@ -35,6 +35,6 @@ For a laptop camera and offline torso and head visualization:
 ros2 launch nira_bringup test_launch.py
 ```
 
-See [launch instructions](../README_LAUNCH.md) for host camera overrides and
-headless options. Physical tracking remains uncommissioned: the brain integration
-in this increment is explicitly an offline desktop preview.
+Tap A / Cross during stand-up or walking to follow the detected face. Hardware
+bringup launches the calibrated detector with `enable_camera:=true`. Supply the
+head camera calibration using `camera_info_url`. Physical tuning requires a robot.

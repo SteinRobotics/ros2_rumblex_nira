@@ -5,12 +5,12 @@ namespace brain {
 using namespace mp_units;
 using namespace mp_units::si::unit_symbols;
 using mp_units::angular::unit_symbols::rad;
-CMovement::CMovement(std::shared_ptr<rclcpp::Node> node) : node_(std::move(node)) {
-    pose_model_ = std::make_shared<CPoseModel>(node_);
-    gait_controller_ = std::make_unique<CGaitController>(node_, pose_model_);
-    face_preview_ = std::make_unique<FacePreview>(node_);
-    pub_body_pose_ =
-        node_->create_publisher<nira_interfaces::msg::BodyPose>("cmd_movement", rclcpp::QoS(1));
+CMovement::CMovement(std::shared_ptr<rclcpp::Node> node)
+    : node_(std::move(node)),
+      pose_model_(std::make_shared<CPoseModel>(node_)),
+      gait_controller_(std::make_unique<CGaitController>(node_, pose_model_)),
+      overlays_(node_) {
+    pub_body_pose_ = node_->create_publisher<nira_interfaces::msg::BodyPose>("cmd_movement", rclcpp::QoS(1));
     pub_movement_name_ =
         node_->create_publisher<std_msgs::msg::String>("movement_name", rclcpp::QoS(1).transient_local());
     pub_movement_velocity_ = node_->create_publisher<geometry_msgs::msg::Twist>("movement_velocity", 10);
@@ -48,7 +48,6 @@ void CMovement::onInitialPose(const nira_interfaces::msg::BodyPose& pose) {
 }
 
 void CMovement::startRequest(const MovementRequest& request) {
-    face_preview_->suspend();
     dwell_deadline_.reset();
     tracked_request_.reset();
     if (!gait_controller_->setGait(request)) {
@@ -85,12 +84,10 @@ void CMovement::run(std::shared_ptr<RequestVelocity> request) {
         RCLCPP_WARN(node_->get_logger(), "Ignoring non-finite velocity request");
         return;
     }
-    if (request->velocity != geometry_msgs::msg::Twist()) face_preview_->suspend();
     velocity_ = limited;
 }
 
 void CMovement::cancel() {
-    face_preview_->suspend();
     pending_request_.reset();
     dwell_deadline_.reset();
     tracked_request_.reset();
@@ -127,8 +124,7 @@ void CMovement::update() {
     if (now < next_update_) return;
     const auto gait = gait_controller_->currentGait();
     const bool frequent =
-        face_preview_->active() || gait == MovementRequest::HOLD_DISTANCE ||
-        gait == MovementRequest::LEVEL_TORSO || isLocomotion(gait) ||
+        gait == MovementRequest::HOLD_DISTANCE || isLocomotion(gait) ||
         gait == MovementRequest::CONTINUOUS_POSE || gait == MovementRequest::SINGLE_POSE ||
         gait == MovementRequest::SEQUENCE_STAND_UP || gait == MovementRequest::SEQUENCE_LAYDOWN ||
         gait == MovementRequest::SEQUENCE_WATCH || gait == MovementRequest::SEQUENCE_BODY_ROLL;
@@ -147,19 +143,8 @@ void CMovement::update() {
     if (initialized_) {
         const bool progressed = gait_controller_->updateSelectedGait(velocity_, torso_, head_, elapsed_s);
         updateRequestCompletion();
-        auto torso = pose_model_->getTorsoPose();
-        if (const auto preview = face_preview_->update(
-                {torso.orientation, pose_model_->getHeadOrientation()}, elapsed_s,
-                gait_controller_->motionStopped() && !gait_controller_->hasPendingGait() && !tracked_request_)) {
-            if (torso.orientation != preview->torso) {
-                torso.orientation = preview->torso;
-                pose_model_->moveTorso(pose_model_->getToePositions(), torso);
-            }
-            torso_ = torso;
-            head_ = preview->head;
-            pose_model_->setHeadOrientation(head_);
-        }
         auto pose = bodyPose(*pose_model_);
+        overlays_.apply(pose, gait_controller_->currentGait(), elapsed_s);
         // Some sequences restore their final pose while returning false on completion.
         if ((progressed || pose != last_pose_) && validBodyPose(pose)) {
             pub_body_pose_->publish(pose);

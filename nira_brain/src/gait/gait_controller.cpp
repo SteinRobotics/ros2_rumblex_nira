@@ -5,7 +5,6 @@
 #include "gait/gait_controller.hpp"
 
 #include "gait/gait_hold_distance.hpp"
-#include "gait/gait_level_torso.hpp"
 
 using brain::MovementRequest;
 
@@ -74,7 +73,6 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
         std::make_shared<CYawSequenceGait>(node_, kinematics_, params_.watch.head_max_yaw, 0.0 * deg);
 
     gaits_[MovementRequest::HOLD_DISTANCE] = std::make_shared<CHoldDistanceGait>(node_, kinematics_, params_);
-    gaits_[MovementRequest::LEVEL_TORSO] = std::make_shared<CLevelTorsoGait>(node_, kinematics_);
 
     // Default active gait (robot starts with no request)
     active_gait_ = gaits_[MovementRequest::NO_REQUEST];
@@ -187,7 +185,6 @@ bool CGaitController::updateSelectedGait(const Velocity& velocity, CPose torso, 
 bool CGaitController::finishesAutomatically() const {
     switch (currentGait()) {
         case MovementRequest::HOLD_DISTANCE:
-        case MovementRequest::LEVEL_TORSO:
         case MovementRequest::SINGLE_POSE:
         case MovementRequest::SEQUENCE_LAYDOWN:
         case MovementRequest::SEQUENCE_STAND_UP:

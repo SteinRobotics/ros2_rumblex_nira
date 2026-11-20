@@ -22,6 +22,13 @@ void LevelTorsoLaw::reset(TorsoTilt initial) {
         throw std::invalid_argument("Initial torso pose exceeds leveling limits");
     tilt_ = initial;
 }
+TorsoTilt LevelTorsoLaw::release(double dt) {
+    validateInterval(dt);
+    const double step = settings_.max_rate * dt;
+    tilt_.roll -= std::clamp(tilt_.roll, -step, step);
+    tilt_.pitch -= std::clamp(tilt_.pitch, -step, step);
+    return tilt_;
+}
 TorsoTilt LevelTorsoLaw::update(TorsoTilt measured, double dt) {
     validateInterval(dt);
     if (!std::isfinite(measured.roll) || !std::isfinite(measured.pitch))
@@ -38,7 +45,6 @@ TorsoTilt LevelTorsoLaw::update(TorsoTilt measured, double dt) {
 
 ImuFeedback::ImuFeedback(const std::shared_ptr<rclcpp::Node>& node)
     : freshness_s(positive(node, "level_torso.freshness_s")),
-      startup_timeout_s(positive(node, "level_torso.startup_timeout_s")),
       body_frame_(textParameter(node, "level_torso.body_frame")),
       node_(node),
       buffer_(node->get_clock()),

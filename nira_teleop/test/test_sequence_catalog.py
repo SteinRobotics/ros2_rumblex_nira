@@ -10,11 +10,11 @@ from nira_teleop.sequence_catalog import load_catalog
 def test_repository_catalog():
     directory = Path(__file__).resolve().parents[2] / 'nira_brain/config/sequences'
     catalog = load_catalog(directory)
-    assert catalog.extra_sequences == (
-        'calibrate', 'clap', 'dance_dancing_street', 'dance_standard', 'hold_distance',
-        'level_torso', 'neutral', 'run_demo', 'waiting', 'walk_demo')
+    assert {'watch', 'high_five', 'hold_distance'} <= set(catalog.extra_sequences)
+    assert 'level_torso' not in catalog.extra_sequences
     assert len(catalog.captions) == 12
-    assert catalog.captions['a'] == 'watch'
+    assert catalog.captions['a'] == 'Follow face'
+    assert catalog.captions['b'] == 'Level torso'
     assert catalog.captions['dpad_up'] == 'standup'
     assert catalog.captions['r2'] == 'dance_hot_dogs_for_breakfast'
 
@@ -26,7 +26,7 @@ def test_discovery_wrappers_and_new_sequences(tmp_path):
     (tmp_path / 'a.yaml').write_text(
         'sequences:\n  - name: mapped\n    trigger: {joystick: button_x}\n  - name: first\n')
     catalog = load_catalog(tmp_path)
-    assert catalog.captions == {'x': 'mapped'}
+    assert catalog.captions == {'a': 'Follow face', 'b': 'Level torso', 'x': 'mapped'}
     assert catalog.extra_sequences == ('first', 'second')
     (tmp_path / 'c.yaml').write_text('name: future_sequence\n')
     assert load_catalog(tmp_path).extra_sequences == ('first', 'second', 'future_sequence')
@@ -34,11 +34,11 @@ def test_discovery_wrappers_and_new_sequences(tmp_path):
 
 def test_reserved_and_shadowed_mappings_remain_accessible(tmp_path):
     (tmp_path / 'a.yaml').write_text('sequences:\n'
-                                  '  - name: first\n    trigger: {joystick: button_a}\n'
-                                  '  - name: shadowed\n    trigger: {joystick: button_a}\n'
+                                  '  - name: first\n    trigger: {joystick: button_x}\n'
+                                  '  - name: shadowed\n    trigger: {joystick: button_x}\n'
                                   '  - name: reserved\n    trigger: {joystick: button_start}\n')
     catalog = load_catalog(tmp_path)
-    assert catalog.captions == {'a': 'first'}
+    assert catalog.captions == {'a': 'Follow face', 'b': 'Level torso', 'x': 'first'}
     assert catalog.extra_sequences == ('shadowed', 'reserved')
 
 

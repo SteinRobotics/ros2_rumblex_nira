@@ -26,4 +26,4 @@ ros2 launch nira_movement servo_driver_gui.launch.py    # on remote pc
 Use `--show-args` on an entry point for its supported options. Hardware launches leave
 speech listening disabled unless `autostart_listening:=true` is requested.
 
-Hardware camera capture is opt-in with `enable_camera:=true camera_device:=/dev/v4l/by-id/<device>`. The desktop stack enables camera and face preview by default; disable both with `enable_camera:=false enable_face_tracking:=false` when no camera is available. Face preview remains an offline feature; it does not enable physical face tracking.
+Hardware camera capture is opt-in with `enable_camera:=true camera_device:=/dev/v4l/by-id/<device>`. The desktop stack enables camera and face preview by default; disable both with `enable_camera:=false enable_face_tracking:=false` when no camera is available. Hardware bringup starts the face detector with the camera. Supply the measured calibration via `camera_info_url`. On either controller, tap Cross (A) to toggle face following or Circle (B) to toggle IMU leveling during stand-up and walking.

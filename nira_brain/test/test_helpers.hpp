@@ -34,8 +34,7 @@ inline std::vector<rclcpp::Parameter> levelTorsoParameters() {
             rclcpp::Parameter("level_torso.tilt_deadband_rad", 0.017),
             rclcpp::Parameter("level_torso.max_tilt_rad", 0.14),
             rclcpp::Parameter("level_torso.max_tilt_rate_rad_s", 0.035),
-            rclcpp::Parameter("level_torso.freshness_s", 0.5),
-            rclcpp::Parameter("level_torso.startup_timeout_s", 2.0)};
+            rclcpp::Parameter("level_torso.freshness_s", 0.5)};
 }
 
 inline std::vector<rclcpp::Parameter> defaultKinematicsParameters() {
@@ -104,6 +103,13 @@ inline std::vector<rclcpp::Parameter> defaultRobotParameters() {
     params.emplace_back("max_velocity_rotation", 0.02);
     const auto gait_params = defaultGaitParameters();
     params.insert(params.end(), gait_params.begin(), gait_params.end());
+    for (const auto& p : levelTorsoParameters()) params.push_back(p);
+    params.emplace_back("face_tracking.max_yaw_deg", 30.0);
+    params.emplace_back("face_tracking.max_pitch_deg", 20.0);
+    params.emplace_back("face_tracking.max_speed_deg_s", 25.0);
+    params.emplace_back("face_tracking.acceleration_deg_s2", 60.0);
+    params.emplace_back("face_tracking.gain", 3.0);
+    params.emplace_back("face_tracking.deadband_deg", 0.5);
     return params;
 }
 

@@ -12,6 +12,7 @@
 #include "nira_interfaces/msg/joystick_request.hpp"
 #include "nira_interfaces/msg/servo_status.hpp"
 //
+#include <array>
 #include <chrono>
 #include <nira_utils/simpletimer.hpp>
 #include <optional>
@@ -104,6 +105,7 @@ class CCoordinator {
         brain::MovementRequest::MOVE_TRIPOD,   brain::MovementRequest::MOVE_RIPPLE,
         brain::MovementRequest::MOVE_WAVE,     brain::MovementRequest::MOVE_CRAWL,
     };
+    std::array<float, 4> last_sticks_{};
     size_t activeGaitIndex_ = 0;
 
     units::LinearVelocity kMaxVelocityLinear_ = 0.0 * m / s;

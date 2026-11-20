@@ -107,6 +107,7 @@ void CCoordinator::sequenceRequested(const std::string& name) {
 }
 
 void CCoordinator::cycleGaitMode() {
+    last_sticks_ = {};  // Apply a held stick to the newly selected mode on the next sample.
     activeGaitIndex_ = (activeGaitIndex_ + 1) % gaitModes_.size();
     auto gaitName = movementTypeToName.at(gaitModes_[activeGaitIndex_]);
     RCLCPP_INFO(node_->get_logger(), "Gait mode switched to: %s", gaitName.c_str());
@@ -130,6 +131,8 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         return;
     }
 
+    if (msg.button_a || msg.button_b) actionPlanner_->toggleOverlays(msg.button_a, msg.button_b);
+
     // Cycle gait mode on button_start
     if (msg.button_start) {
         cycleGaitMode();
@@ -147,6 +150,11 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         return;
     }
 
+    const std::array sticks{msg.left_stick_horizontal, msg.left_stick_vertical, msg.right_stick_horizontal,
+                            msg.right_stick_vertical};
+    // Button pulses and their releases also carry a complete stick sample.
+    if (sticks == last_sticks_) return;
+    last_sticks_ = sticks;
     if (gaitModes_[activeGaitIndex_] == MovementRequest::CONTINUOUS_POSE) {
         submitRequestMove(poseFromJoystick(msg));
         return;
@@ -157,8 +165,7 @@ void CCoordinator::joystickRequestReceived(const JoystickRequest& msg) {
         RCLCPP_WARN_STREAM(node_->get_logger(), "movement request is locked, ignoring joystick request");
         return;
     }
-    if (actualMovementType_ == MovementRequest::MOVE_COMBINED &&
-        command.type == MovementRequest::NO_REQUEST) {
+    if (isLocomotion(actualMovementType_) && command.type == MovementRequest::NO_REQUEST) {
         RCLCPP_INFO_STREAM(node_->get_logger(), "end move request");
         auto request = std::make_shared<RequestVelocity>();
         request->velocity = *command.velocity;

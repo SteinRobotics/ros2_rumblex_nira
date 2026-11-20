@@ -1,8 +1,7 @@
-"""Desktop composition is opt-in by robot and cannot leak into Gazebo or hardware."""
+"""Verify desktop and calibrated robot detector launch paths."""
 
 import importlib.util
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from launch import LaunchContext
@@ -11,9 +10,9 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def module():
+def module(name="test_launch"):
     spec = importlib.util.spec_from_file_location(
-        "test_launch", ROOT / "nira_bringup/launch/test_launch.py"
+        name, ROOT / f"nira_bringup/launch/{name}.py"
     )
     result = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(result)
@@ -66,3 +65,16 @@ def test_incompatible_preview_rejected(ctx):
 
 def test_disabled_does_not_resolve_camera_or_face_packages():
     assert module()._face_preview(context(camera="false", tracking="false")) == []
+
+
+def test_target_detector_follows_camera_and_uses_calibrated_mode():
+    launch = module("target_launch").generate_launch_description()
+    ctx = context()
+    ctx.launch_configurations["enable_navigation"] = "false"
+    detector, = [action for action in launch.entities
+                 if isinstance(action, IncludeLaunchDescription) and action.condition
+                 and action.condition.evaluate(ctx)]
+    detector.launch_description_source.get_launch_description(ctx)
+    assert Path(detector.launch_description_source.location).name == "face_tracking_launch.py"
+    assert not detector.condition.evaluate(context(camera="false"))
+    assert "desktop_preview" not in dict(detector.launch_arguments)

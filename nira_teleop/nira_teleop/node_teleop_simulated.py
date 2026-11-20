@@ -277,7 +277,8 @@ def main(args=None):
             rclpy.spin_once(node, timeout_sec=0.0)
             for event in pygame.event.get():
                 action = gui.handle_event(event, node.now_seconds())
-                if action in ('reset', 'quit'):
+                # Deliver each toggle before processing another queued click.
+                if action in ('reset', 'quit') or node.state.short_presses.intersection(('a', 'b')):
                     node.publish_state(force=True)
                 if action == 'quit':
                     running = False

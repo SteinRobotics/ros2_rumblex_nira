@@ -33,48 +33,31 @@ priority, except `standup`, which has high priority. Unknown names are logged an
 ignored. Rebuild `nira_brain` and restart the brain and GUI after catalog changes;
 see [BUILD.md](BUILD.md#incremental-builds).
 
-## Activate IMU torso balancing
+## Toggle standing and walking pose features
 
-With the hardware stack running, request the built-in `level_torso` sequence:
+On either PS3 controller, tap **A / Cross** to toggle Follow Face and **B / Circle**
+to toggle Level Torso. Both start off. They can run together during stand-up,
+standing hold, and walking. Other gaits pause the corrections until stand-up or walking resumes.
 
-```bash
-ros2 topic pub --once /sequence_request std_msgs/msg/String "{data: 'level_torso'}"
-```
-
-This stands up first, then uses IMU orientation to correct torso roll/pitch for
-**5 seconds**, and finally holds the resulting pose. Feet, torso position/yaw,
-and head pose stay fixed during leveling. This is a timed standing activity;
-it does not enable continuous balancing while walking.
+For hardware face tracking, start the head camera and pass its measured calibration URL.
 
 ```bash
-ros2 launch nira_bringup target_launch.py
+ros2 launch nira_bringup target_launch.py enable_camera:=true camera_device:=/dev/v4l/by-id/YOUR_CAMERA camera_info_url:=file:///path/to/calibration.yaml
+ros2 topic echo --once /perception/face_target
+ros2 topic echo --once --qos-durability transient_local /brain/face_tracking_status
 ```
 
-This starts the brain, movement, and BNO055 driver. Leveling also requires a TF
-transform from `base_link` to the IMU message's `header.frame_id` (normally
-`imu_link`). Hardware bringup does not start a robot-state publisher. If no
-existing publisher supplies that transform, run the primitive model's publisher
-in another sourced terminal, provided its mounting matches the physical IMU:
+Leveling uses BNO055 orientation and the mounting transform. Inspect both with:
 
 ```bash
 ros2 topic echo --once --qos-reliability best_effort /bno055/imu
 ros2 run tf2_ros tf2_echo base_link imu_link
 ```
 
-The IMU must publish valid orientation quaternions with current timestamps and
-`orientation_covariance[0]` other than `-1`. Defaults allow 2 seconds to acquire
-valid IMU/TF data and require readings fresher than 0.5 seconds. Missing, invalid,
-or stale data aborts the sequence; check the brain log for
-`LEVEL_TORSO ended sequence`.
-
-To change the active duration, edit `kLevelDuration` in
-[`level_torso.yaml`](nira_brain/config/sequences/level_torso.yaml), rebuild
-`nira_brain`, and restart the brain. Configure the topic, gains, and limits
-under `level_torso` in `nira_brain/config/nira/gait.yaml`, then rebuild and
-restart to load the updated file. Defaults are approximately a 1-degree deadband,
-8-degree maximum correction, and 2 degrees/second maximum correction rate;
-physical tuning is still required. See the
-[sensor gait documentation](nira_brain/config/sequences/README.md) for details.
+Configure IMU freshness, correction gain, deadband, angle and rate limits under
+`level_torso` in `nira_brain/config/nira/gait.yaml`. The defaults cap corrections
+at 8 degrees and 2 degrees per second. Missing or stale observations release the
+affected correction. Fresh data resumes the feature while its switch is on.
 
 ## Send requests
 

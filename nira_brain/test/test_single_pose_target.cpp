@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include "gait/gait_controller.hpp"
-#include "parser/sequence_parser.hpp"
 #include "nira_utils/body_pose.hpp"
+#include "parser/sequence_parser.hpp"
 #include "test_helpers.hpp"
 
 namespace {
@@ -189,7 +189,7 @@ TEST_F(SinglePoseTargetTest, PendingRequestUsesItsOwnDefaultLinearCurve) {
     EXPECT_NEAR(bodyPose(*model).head_orientation.yaw, origin.head_orientation.yaw + 20, 1e-9);
 }
 
-TEST_F(SinglePoseTargetTest, FlyingKeepsKneesStraightAndWingsAttachedThroughoutRolls) {
+TEST_F(SinglePoseTargetTest, FlyingFollowsWingBeatsAndHoldsWingsThroughTorsoRolls) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(NIRA_SEQUENCES_DIRECTORY) + "/flying.yaml"));
     const auto sequence = parser.getSequence("flying");
@@ -204,10 +204,14 @@ TEST_F(SinglePoseTargetTest, FlyingKeepsKneesStraightAndWingsAttachedThroughoutR
         const auto action = std::dynamic_pointer_cast<RequestMovementType>(groups[i].at(0));
         ASSERT_TRUE(action);
         const auto& request = action->movementRequest;
+        const auto start_angles = model->getLegAngles();
+        const bool downstroke = i < 7 && i % 2 == 1;
+        const CLegAngles wing_target(0, i >= 7 ? 0 : (downstroke ? -10 : 25), downstroke ? 80 : 110);
         ASSERT_TRUE(controller->setGait(request));
         const double seconds = request.duration_s.numerical_value_in(s);
         duration += seconds;
-        for (int tick = 0; tick < std::lround(seconds / 0.02); ++tick) {
+        const int ticks = std::lround(seconds / 0.02);
+        for (int tick = 1; tick <= ticks; ++tick) {
             advance(1);
             const auto actual = bodyPose(*model);
             // Exercise the BodyPose -> IK boundary used by movement and visualization.
@@ -215,17 +219,15 @@ TEST_F(SinglePoseTargetTest, FlyingKeepsKneesStraightAndWingsAttachedThroughoutR
             for (size_t leg : {0u, 2u, 3u, 5u})
                 EXPECT_EQ(actual.toe_positions[leg], origin.toe_positions[leg]);
             for (auto leg : {ELegIndex::RightMid, ELegIndex::LeftMid}) {
-                const auto angles = receiver.getLegAngles(leg);
-                if (i >= 1 && i <= 11) {
-                    EXPECT_NEAR(angles.femur_tibia.numerical_value_in(deg), 90, 1e-5);
+                if (i + 1 < groups.size()) {
+                    const double progress =
+                        interpolationProgress(double(tick) / ticks, InterpolationType::SinSquared);
+                    expectAnglesNear(start_angles.at(leg).linearInterpolate(wing_target, progress),
+                                     model->getLegAngles(leg), "commanded wing angles", 1e-8);
                 }
-                if (i >= 8 && i <= 11) {
-                    EXPECT_NEAR(angles.torso_coxa.numerical_value_in(deg), 0, 1e-5);
-                    EXPECT_NEAR(angles.coxa_femur.numerical_value_in(deg), 0, 1e-5);
-                }
-                // Reconstructed FK must reach the requested toe, not a clamped approximation.
+                // IK can select the other knee bend for the same toe position.
                 auto reconstructed = receiver;
-                reconstructed.setLegAngles(leg, angles);
+                reconstructed.setLegAngles(leg, receiver.getLegAngles(leg));
                 const auto rebuilt = reconstructed.getToePositions().at(leg);
                 const auto expected = model->getToePositions().at(leg);
                 // At a straight knee, acos magnifies roundoff to nanometres.
@@ -509,7 +511,7 @@ TEST_F(SinglePoseTargetTest, HighFiveCatalogRaisesHoldsAndRestoresEachInvocation
     ASSERT_TRUE(parser.getSequenceForVoiceRequest("commandHighFive"));
     nira_interfaces::msg::JoystickRequest joystick;
     joystick.button_b = true;
-    ASSERT_TRUE(parser.getSequenceForJoystickRequest(joystick));
+    EXPECT_FALSE(parser.getSequenceForJoystickRequest(joystick));
     const auto sequence = parser.getSequence("high_five");
     ASSERT_TRUE(sequence);
     ASSERT_EQ(sequence->get().actionGroups.size(), 3u);

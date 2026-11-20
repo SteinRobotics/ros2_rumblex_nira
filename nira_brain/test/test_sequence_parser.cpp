@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <fstream>
 
-#include "rclcpp/rclcpp.hpp"
 #include "nira_brain/parser/sequence_parser.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace brain {
 
@@ -362,19 +362,13 @@ TEST_F(SequenceParserTest, SensorGaitsUseStandardMovementRequests) {
 name: sensors
 actions:
   - movement: {name: HOLD_DISTANCE, distance_m: 0.6, duration_s: 10}
-  - movement: {name: LEVEL_TORSO, duration_s: 2}
 )"));
     const auto hold = request<RequestMovementType>("sensors", 0, 0);
-    const auto level = request<RequestMovementType>("sensors", 1, 0);
     ASSERT_TRUE(hold);
-    ASSERT_TRUE(level);
     EXPECT_EQ(hold->movementRequest.type, MovementRequest::HOLD_DISTANCE);
     ASSERT_TRUE(hold->movementRequest.distance_m);
     EXPECT_DOUBLE_EQ(hold->movementRequest.distance_m->numerical_value_in(m), 0.6);
     EXPECT_EQ(hold->movementRequest.duration_s, 10.0 * s);
-    EXPECT_EQ(level->movementRequest.type, MovementRequest::LEVEL_TORSO);
-    EXPECT_FALSE(level->movementRequest.distance_m);
-    EXPECT_EQ(level->movementRequest.duration_s, 2.0 * s);
     for (const auto* action :
          {"{movement: {name: HOLD_DISTANCE}}", "{movement: {name: HOLD_DISTANCE, distance_m: 0}}",
           "{movement: {name: HOLD_DISTANCE, distance_m: .nan}}",
@@ -395,7 +389,7 @@ actions:
       times: 2
       actions:
         - movement: {name: HOLD_DISTANCE, distance_m: 0.7}
-        - movement: {name: LEVEL_TORSO}
+        - movement: {name: SEQUENCE_WAITING}
 )"));
     EXPECT_NE(request<RequestMovementType>("loop", 0, 0), request<RequestMovementType>("loop", 2, 0));
     EXPECT_NE(request<RequestMovementType>("loop", 1, 0), request<RequestMovementType>("loop", 3, 0));
@@ -573,7 +567,7 @@ TEST_F(SequenceFilesTest, RejectsBrokenIncludesWithoutReplacingCatalog) {
           "actions: [", "name: invalid", "actions: [{include: [], say: mixed}]"}) {
         write("snippet.yaml", snippet);
         EXPECT_FALSE(parser_.parseFile(file)) << snippet;
-        EXPECT_EQ(parser_.getSequences().size(), 30u);
+        EXPECT_EQ(parser_.getSequences().size(), 29u);
         EXPECT_TRUE(parser_.getSequenceForVoiceRequest("commandStandup"));
     }
 }
@@ -597,13 +591,15 @@ TEST_F(SequenceParserTest, RejectsIncludesWithoutSourceFile) {
 
 TEST_F(SequenceParserTest, LoadsCatalogAndResolvesTriggers) {
     ASSERT_TRUE(parser_.parseDirectory(NIRA_SEQUENCES_DIRECTORY));
-    EXPECT_EQ(parser_.getSequences().size(), 30u);
+    EXPECT_EQ(parser_.getSequences().size(), 29u);
     EXPECT_FALSE(parser_.getSequence("missing"));
     EXPECT_FALSE(parser_.getSequenceForVoiceRequest("missing"));
     nira_interfaces::msg::JoystickRequest joystick;
     EXPECT_FALSE(parser_.getSequenceForJoystickRequest(joystick));
     joystick.button_a = true;
-    const auto watch = parser_.getSequenceForJoystickRequest(joystick);
+    joystick.button_b = true;
+    EXPECT_FALSE(parser_.getSequenceForJoystickRequest(joystick));
+    const auto watch = parser_.getSequenceForVoiceRequest("commandWatch");
     ASSERT_TRUE(watch);
     EXPECT_EQ(watch->get().name, "watch");
     EXPECT_EQ(watch->get().actionGroups.size(), 2u);
@@ -667,7 +663,6 @@ TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
         double seconds;
     };
     for (const auto& preset : {Preset{"hold_distance", MovementRequest::HOLD_DISTANCE, 10.0},
-                               Preset{"level_torso", MovementRequest::LEVEL_TORSO, 5.0},
                                Preset{"waiting", MovementRequest::SEQUENCE_WAITING, 5.0},
                                Preset{"run_demo", MovementRequest::MOVE_TRIPOD, 3.0}}) {
         SCOPED_TRACE(preset.name);
@@ -922,7 +917,7 @@ TEST_F(SequenceParserTest, InvalidActionsRetainPreviousCatalog) {
           "sequences: [{name: valid, actions: [{say: hi}]}, {name: invalid, actions: []}]",
           "name: invalid\nactions: [{movement: {name: SINGLE_POSE, duration_s: invalid}, say: hello}]"}) {
         EXPECT_FALSE(parser_.parseString(text));
-        EXPECT_EQ(parser_.getSequences().size(), 30u);
+        EXPECT_EQ(parser_.getSequences().size(), 29u);
     }
 }
 TEST_F(SequenceParserTest, BodyPoseUsesOneRequestAndPreservesComponentPresence) {

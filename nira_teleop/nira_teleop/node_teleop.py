@@ -185,7 +185,7 @@ class NodeTeleop(Node):
 
         return short_press, long_press_active, press_time_tracker
 
-    def debounce_buttons(self):
+    def debounce_buttons(self, event):
         pygame.event.pump()  # Process events
         any_button_activity = False
         now = self.get_clock().now()
@@ -197,7 +197,14 @@ class NodeTeleop(Node):
                 self.button_press_time[button_name] = None
                 continue
 
-            button_pressed = bool(self.joystick.get_button(button_index))
+            if button_name in ('A', 'B'):
+                # A complete tap can be queued between polls. Consume its down/up events in order.
+                button_pressed = self.button_press_time[button_name] is not None
+                if (event is not None and event.type in (pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP)
+                        and event.button == button_index and event.instance_id == self.joystick.get_instance_id()):
+                    button_pressed = event.type == pygame.JOYBUTTONDOWN
+            else:
+                button_pressed = bool(self.joystick.get_button(button_index))
             short_press, long_press, new_time = self.debounce_button(
                 button_pressed, self.button_press_time[button_name], self.button_debounce_duration_s, now
             )
@@ -214,7 +221,7 @@ class NodeTeleop(Node):
         axis_or_hat_event = (
             event is not None and (event.type == pygame.JOYAXISMOTION or event.type == pygame.JOYHATMOTION)
         )
-        if self.debounce_buttons() or axis_or_hat_event:
+        if self.debounce_buttons(event) or axis_or_hat_event:
             self.publish_joystick_data()
 
     def publish_joystick_data(self):

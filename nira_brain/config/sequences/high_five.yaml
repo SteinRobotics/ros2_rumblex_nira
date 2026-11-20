@@ -2,7 +2,6 @@
 # Start standing; this sequence does not run standup first.
 name: high_five
 trigger:
-  joystick: button_b
   voice: commandHighFive
 variables:
   kMoveDuration: &kMoveDuration 1.0  # s

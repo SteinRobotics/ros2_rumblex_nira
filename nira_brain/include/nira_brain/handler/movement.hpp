@@ -5,16 +5,19 @@
 #include <optional>
 
 #include "gait/gait_controller.hpp"
-#include "handler/face_preview.hpp"
+#include "handler/pose_overlays.hpp"
 #include "ihandler.hpp"
-#include "requester/irequester.hpp"
 #include "nira_utils/body_pose.hpp"
+#include "requester/irequester.hpp"
 #include "std_msgs/msg/string.hpp"
 
 namespace brain {
 class CMovement : public IHandler {
    public:
     explicit CMovement(std::shared_ptr<rclcpp::Node> node);
+    void toggleOverlays(bool face, bool level) {
+        overlays_.toggle(face, level);
+    }
     void update() override;
     void cancel() override;
     // These describe planned gait state, not measured hardware motion. Before
@@ -43,7 +46,7 @@ class CMovement : public IHandler {
     rclcpp::Subscription<nira_interfaces::msg::BodyPose>::SharedPtr sub_body_pose_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_movement_name_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_movement_velocity_;
-    std::unique_ptr<FacePreview> face_preview_;
+    PoseOverlays overlays_;
     Velocity velocity_;
     CPose torso_;
     COrientation head_;

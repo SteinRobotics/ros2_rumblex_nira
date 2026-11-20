@@ -3,7 +3,6 @@
 #include <thread>
 
 #include "gait/gait_controller.hpp"
-#include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/range.hpp"
 #include "test_helpers.hpp"
 
@@ -18,9 +17,8 @@ class SensorGaitsTest : public ::testing::Test {
     void SetUp() override {
         rclcpp::init(0, nullptr);
         auto parameters = test_helpers::defaultRobotParameters();
-        for (const auto& extra :
-             {test_helpers::holdDistanceParameters(), test_helpers::levelTorsoParameters()})
-            parameters.insert(parameters.end(), extra.begin(), extra.end());
+        const auto range_params = test_helpers::holdDistanceParameters();
+        parameters.insert(parameters.end(), range_params.begin(), range_params.end());
         rclcpp::NodeOptions options;
         options.parameter_overrides(parameters);
         node = std::make_shared<rclcpp::Node>("sensor_gaits_test", options);
@@ -30,7 +28,6 @@ class SensorGaitsTest : public ::testing::Test {
         executor = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
         executor->add_node(node);
         ranges = node->create_publisher<sensor_msgs::msg::Range>("test_range", rclcpp::SensorDataQoS());
-        imus = node->create_publisher<sensor_msgs::msg::Imu>("test_imu", rclcpp::SensorDataQoS());
         controller->on_gait_changed = [&](const MovementRequest& request) { changes.push_back(request); };
     }
     void TearDown() override {
@@ -59,14 +56,6 @@ class SensorGaitsTest : public ::testing::Test {
                 range.range = range_m;
                 ranges->publish(range);
             }
-            if (feed_imu) {
-                sensor_msgs::msg::Imu imu;
-                imu.header.frame_id = "base_link";
-                imu.header.stamp = node->now();
-                imu.orientation.x = std::sin(0.05);
-                imu.orientation.w = std::cos(0.05);
-                imus->publish(imu);
-            }
             executor->spin_some();
             controller->updateSelectedGait(external, CPose(), COrientation(), 0.02 * s);
             if (controller->takeSequenceAbort()) ++sequence_ends;
@@ -78,9 +67,7 @@ class SensorGaitsTest : public ::testing::Test {
     std::unique_ptr<CGaitController> controller;
     std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor;
     rclcpp::Publisher<sensor_msgs::msg::Range>::SharedPtr ranges;
-    rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imus;
     bool feed_range = false;
-    bool feed_imu = false;
     float range_m = 0.6;
     Velocity external;
     int sequence_ends = 0;
@@ -103,57 +90,6 @@ TEST_F(SensorGaitsTest, HoldDistanceIsFiniteAndOwnsVelocityAndHeadMotion) {
     EXPECT_EQ(model->getTorsoPose(), CPose(initial.torso_pose));
     EXPECT_EQ(controller->commandedVelocity(external).toMsg(), geometry_msgs::msg::Twist());
     EXPECT_EQ(node->count_subscribers("test_imu"), 0u);
-}
-TEST_F(SensorGaitsTest, SensorGaitsHandOffThroughRestAndRetainTheLeveledPose) {
-    feed_imu = true;
-    select(MovementRequest::LEVEL_TORSO, 10);
-    tick(20);
-    EXPECT_EQ(controller->currentGait(), MovementRequest::LEVEL_TORSO);
-    EXPECT_TRUE(controller->finishesAutomatically());
-    const auto leveled = model->getTorsoPose();
-    EXPECT_LT(leveled.orientation.roll, 0.0 * deg);
-    feed_range = true;
-    range_m = 1.0;
-    select(MovementRequest::HOLD_DISTANCE, 10);
-    EXPECT_TRUE(controller->hasPendingGait());
-    EXPECT_EQ(model->getTorsoPose(), leveled);
-    tick(80);
-    EXPECT_EQ(controller->currentGait(), MovementRequest::HOLD_DISTANCE);
-    EXPECT_GT(controller->commandedVelocity(external).linear.x, 0.0 * m / s);
-    EXPECT_EQ(model->getTorsoPose(), leveled);
-    select(MovementRequest::LEVEL_TORSO, 0.2);
-    EXPECT_TRUE(controller->hasPendingGait());
-    EXPECT_EQ(controller->commandedVelocity(external).toMsg(), geometry_msgs::msg::Twist());
-    for (int i = 0; i < 1000 && controller->hasPendingGait(); ++i) tick();
-    ASSERT_EQ(controller->currentGait(), MovementRequest::LEVEL_TORSO);
-    tick(30);
-    EXPECT_TRUE(controller->motionStopped());
-    EXPECT_EQ(controller->commandedVelocity(external).toMsg(), geometry_msgs::msg::Twist());
-    const auto final_pose = bodyPose(*model);
-    MovementRequest pose;
-    pose.type = MovementRequest::SINGLE_POSE;
-    pose.body_pose.has_head_orientation = true;
-    pose.body_pose.head_orientation.yaw = -10;
-    ASSERT_TRUE(controller->setGait(pose));
-    EXPECT_EQ(bodyPose(*model), final_pose);
-    tick(60);
-    EXPECT_EQ(model->getTorsoPose(), CPose(final_pose.torso_pose));
-    EXPECT_EQ(sequence_ends, 0);
-}
-TEST_F(SensorGaitsTest, SequenceEndsOnceAndRestartUsesFreshControlState) {
-    select(MovementRequest::LEVEL_TORSO, 0.2);
-    tick(120);
-    EXPECT_TRUE(controller->motionStopped());
-    EXPECT_EQ(sequence_ends, 1);
-    tick(10);
-    EXPECT_EQ(sequence_ends, 1);
-    feed_imu = true;
-    select(MovementRequest::LEVEL_TORSO, 0.2);
-    tick(30);
-    EXPECT_TRUE(controller->motionStopped());
-    EXPECT_EQ(sequence_ends, 1);
-    EXPECT_EQ(changes.size(), 2u);
-    EXPECT_LT(model->getTorsoPose().orientation.roll, 0.0 * deg);
 }
 TEST_F(SensorGaitsTest, SameHoldGaitRequestReplacesDistanceAfterStopping) {
     feed_range = true;
@@ -194,7 +130,7 @@ TEST_F(SensorGaitsTest, InvalidDistanceIsRejectedBeforeTheCurrentGaitChanges) {
     EXPECT_EQ(controller->currentGait(), initial_gait);
     request.distance_m = -0.6 * m;
     EXPECT_FALSE(controller->setGait(request));
-    request.type = MovementRequest::LEVEL_TORSO;
+    request.type = MovementRequest::MOVE_TRIPOD;
     EXPECT_FALSE(controller->setGait(request));
     EXPECT_EQ(sequence_ends, 0);
 }

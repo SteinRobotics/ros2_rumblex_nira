@@ -21,6 +21,9 @@ class CActionPlanner {
     CActionPlanner(std::shared_ptr<rclcpp::Node> node);
     virtual ~CActionPlanner() = default;
 
+    void toggleOverlays(bool face, bool level) {
+        handler_movement_->toggleOverlays(face, level);
+    }
     void setMovementCallback(std::function<void(const MovementRequest&)> callback) {
         handler_movement_->on_gait_changed = std::move(callback);
     }

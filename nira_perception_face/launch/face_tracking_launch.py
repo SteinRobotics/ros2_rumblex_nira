@@ -13,7 +13,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
-                "params_file",
+                "detector_params_file",
                 default_value=PathJoinSubstitution(
                     [share, "config", "nira", "face_tracking.yaml"]
                 ),
@@ -32,7 +32,7 @@ def generate_launch_description():
                 name="node_face_detector",
                 output="screen",
                 parameters=[
-                    LaunchConfiguration("params_file"),
+                    LaunchConfiguration("detector_params_file"),
                     {
                         "model_path": LaunchConfiguration("model_path"),
                         "compressed_input": ParameterValue(

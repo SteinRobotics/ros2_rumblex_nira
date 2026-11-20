@@ -15,7 +15,6 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -49,11 +48,11 @@ src/requester/text_interpreter.cpp
 src/handler/system.cpp
 src/handler/communication.cpp
 src/handler/movement.cpp
-src/handler/face_preview.cpp
+src/handler/face_follower.cpp
+src/handler/pose_overlays.cpp
 src/gait/hold_distance_control.cpp
 src/gait/level_torso_control.cpp
 src/gait/gait_hold_distance.cpp
-src/gait/gait_level_torso.cpp
 src/parser/sequence_parser.cpp
 src/parser/sequence_loader.cpp
 src/parser/action_decoder.cpp
@@ -65,7 +64,6 @@ target_include_directories(nira_brain_lib PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(nira_brain_lib PUBLIC
-  ${std_srvs_TARGETS}
   nira_utils::nira_geometry
   ${sensor_msgs_TARGETS}
   tf2::tf2
@@ -127,8 +125,8 @@ if(BUILD_TESTING)
   add_test(NAME test_sequence_generator
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_sequence_generator.py)
   find_package(ament_cmake_gtest REQUIRED)
-  ament_add_gtest(test_face_preview test/test_face_preview.cpp)
-  target_link_libraries(test_face_preview nira_brain_lib)
+  ament_add_gtest(test_face_follower test/test_face_follower.cpp)
+  target_link_libraries(test_face_follower nira_brain_lib)
   ament_add_gtest(test_sensor_gaits test/test_sensor_gaits.cpp)
   target_link_libraries(test_sensor_gaits nira_brain_lib)
   ament_add_gtest(test_leveling_movement_handler test/test_leveling_movement_handler.cpp)

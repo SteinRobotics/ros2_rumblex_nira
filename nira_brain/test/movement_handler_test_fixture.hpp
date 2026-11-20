@@ -20,15 +20,14 @@ using namespace brain;
 using namespace std::chrono_literals;
 class MovementHandlerTest : public ::testing::Test {
    protected:
-    virtual void configurePreview(std::vector<rclcpp::Parameter>&) {}
+    virtual void configurePreview(std::vector<rclcpp::Parameter>&) {
+    }
     void SetUp() override {
         rclcpp::init(0, nullptr);
         rclcpp::NodeOptions options;
         auto parameters = test_helpers::defaultRobotParameters();
         const auto extra = test_helpers::holdDistanceParameters();
         parameters.insert(parameters.end(), extra.begin(), extra.end());
-        const auto leveling = test_helpers::levelTorsoParameters();
-        parameters.insert(parameters.end(), leveling.begin(), leveling.end());
         configurePreview(parameters);
         options.parameter_overrides(parameters);
         node = std::make_shared<rclcpp::Node>("movement_handler_test", "/movement_handler_test", options);
@@ -37,11 +36,10 @@ class MovementHandlerTest : public ::testing::Test {
         handler = std::make_unique<CMovement>(node);
         imu_pub = node->create_publisher<sensor_msgs::msg::Imu>("test_imu", rclcpp::SensorDataQoS());
         range_pub = node->create_publisher<sensor_msgs::msg::Range>("test_range", rclcpp::SensorDataQoS());
-        feedback = node->create_publisher<nira_interfaces::msg::BodyPose>(
-            "body_pose_actual", rclcpp::QoS(1).transient_local());
+        feedback = node->create_publisher<nira_interfaces::msg::BodyPose>("body_pose_actual",
+                                                                          rclcpp::QoS(1).transient_local());
         commands = node->create_subscription<nira_interfaces::msg::BodyPose>(
-            "cmd_movement", 10,
-            [this](const nira_interfaces::msg::BodyPose& msg) { poses.push_back(msg); });
+            "cmd_movement", 10, [this](const nira_interfaces::msg::BodyPose& msg) { poses.push_back(msg); });
         telemetry = node->create_subscription<geometry_msgs::msg::Twist>(
             "movement_velocity", 10,
             [this](const geometry_msgs::msg::Twist& msg) { velocities.push_back(msg); });
@@ -108,13 +106,6 @@ class MovementHandlerTest : public ::testing::Test {
         action->movementRequest.type = MovementRequest::HOLD_DISTANCE;
         action->movementRequest.name = "HOLD_DISTANCE";
         action->movementRequest.distance_m = 0.6 * m;
-        action->movementRequest.duration_s = duration * s;
-        handler->run(action);
-    }
-    void level(double duration) {
-        auto action = std::make_shared<RequestMovementType>();
-        action->movementRequest.type = MovementRequest::LEVEL_TORSO;
-        action->movementRequest.name = "LEVEL_TORSO";
         action->movementRequest.duration_s = duration * s;
         handler->run(action);
     }

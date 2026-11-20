@@ -4,23 +4,15 @@
 namespace {
 class FaceMovementTest : public MovementHandlerTest {
     void configurePreview(std::vector<rclcpp::Parameter>& params) override {
-        params.insert(params.end(), {{"face_tracking.desktop_preview", true},
-                                     {"face_tracking.max_yaw_deg", 30.0},
-                                     {"face_tracking.max_pitch_deg", 20.0},
-                                     {"face_tracking.max_speed_deg_s", 25.0},
-                                     {"face_tracking.acceleration_deg_s2", 60.0},
-                                     {"face_tracking.gain", 3.0},
-                                     {"face_tracking.deadband_deg", 0.5}});
+        params.emplace_back("face_tracking.desktop_preview", true);
     }
 };
 
-TEST_F(FaceMovementTest, PublishesCoordinatedPoseWithPlantedFeetAndHoldsOnLoss) {
+TEST_F(FaceMovementTest, PublishesCoordinatedPoseWithPlantedFeetAndReturnsOnLoss) {
     auto target_pub = node->create_publisher<nira_interfaces::msg::FaceTarget>("perception/face_target", 1);
-    auto seed = initialPose();
-    seed.torso_pose.position.x = 0.002;
-    seed.head_orientation.pitch = 0.0;
-    feedback->publish(seed);
-    pump(150ms);
+    stand();
+    const auto seed = poses.back();
+    handler->toggleOverlays(true, false);
     nira_interfaces::msg::FaceTarget face;
     face.header.frame_id = "desktop_camera_optical_frame";
     face.valid = face.roll_valid = true;
@@ -33,15 +25,95 @@ TEST_F(FaceMovementTest, PublishesCoordinatedPoseWithPlantedFeetAndHoldsOnLoss) 
         pump(80ms);
     }
     ASSERT_FALSE(poses.empty());
-    EXPECT_DOUBLE_EQ(poses.back().torso_pose.orientation.yaw, 10.0);
+    EXPECT_DOUBLE_EQ(poses.back().torso_pose.orientation.yaw, 5.0);
     EXPECT_GT(poses.back().head_orientation.yaw, 0.0);
     EXPECT_GT(poses.back().torso_pose.orientation.roll, 0.0);
     EXPECT_EQ(poses.back().toe_positions, seed.toe_positions);
     EXPECT_EQ(poses.back().torso_pose.position, seed.torso_pose.position);
-    pump(350ms);
-    const auto count = poses.size();
+    // Keep the face target fixed while adding an opposing IMU roll correction.
+    const double face_roll = poses.back().torso_pose.orientation.roll;
+    handler->toggleOverlays(false, true);
+    feed_imu = true;
+    imu_roll = 0.1;
+    for (int i = 0; i < 10; ++i) {
+        face.header.stamp = node->now();
+        target_pub->publish(face);
+        pump(80ms);
+    }
+    EXPECT_GT(poses.back().torso_pose.orientation.roll, 0.0);
+    EXPECT_LT(poses.back().torso_pose.orientation.roll, face_roll - 0.3);
+    EXPECT_EQ(poses.back().toe_positions, seed.toe_positions);
+
+    auto velocity = std::make_shared<RequestVelocity>();
+    velocity->velocity.linear.x = 0.01;
+    handler->run(velocity);
+    request(MovementRequest::MOVE_TRIPOD);
+    // The fixed target should retain its pointing angle across walking phases.
+    const auto tracked_yaw = poses.back().head_orientation.yaw;
+    poses.clear();
+    for (int i = 0; i < 20; ++i) {
+        face.header.stamp = node->now();
+        target_pub->publish(face);
+        pump(80ms);
+    }
+    ASSERT_FALSE(poses.empty());
+    for (const auto& pose : poses) EXPECT_NEAR(pose.head_orientation.yaw, tracked_yaw, 0.6);
+    pump(2s);
+    EXPECT_DOUBLE_EQ(poses.back().head_orientation.yaw, 0.0);
+    EXPECT_LT(poses.back().torso_pose.orientation.roll, 0.0);
+    EXPECT_DOUBLE_EQ(poses.back().torso_pose.orientation.yaw, 0.0);
+    EXPECT_NE(poses.back().toe_positions, seed.toe_positions);
+    EXPECT_DOUBLE_EQ(velocities.back().linear.x, 0.01);
+    EXPECT_FALSE(sequence_ended);
+}
+
+class WalkingFaceTest : public MovementHandlerTest, public ::testing::WithParamInterface<uint8_t> {
+    void configurePreview(std::vector<rclcpp::Parameter>& params) override {
+        params.emplace_back("gait.crawl.head_max_yaw_deg", 8.0);
+    }
+};
+
+TEST_P(WalkingFaceTest, TogglingFollowFaceMidStrideSuppressesAndRestoresScan) {
+    stand();
+    auto velocity = std::make_shared<RequestVelocity>();
+    velocity->velocity.linear.x = 0.01;
+    handler->run(velocity);
+    request(GetParam());
+    const auto scans = [this] {
+        return std::ranges::any_of(
+            poses, [](const auto& pose) { return std::abs(pose.head_orientation.yaw) > 0.1; });
+    };
+    poses.clear();
+    pump(500ms);
+    ASSERT_TRUE(scans());
+    handler->toggleOverlays(true, false);
+    poses.clear();
+    pump(600ms);
+    ASSERT_GE(poses.size(), 2u);
+    for (const auto& pose : poses) EXPECT_DOUBLE_EQ(pose.head_orientation.yaw, 0.0);
+    EXPECT_NE(poses.front().toe_positions, poses.back().toe_positions);
+    handler->toggleOverlays(true, false);
+    poses.clear();
+    pump(500ms);
+    EXPECT_TRUE(scans());
+}
+
+INSTANTIATE_TEST_SUITE_P(MoveGaits, WalkingFaceTest,
+                         ::testing::Values(MovementRequest::MOVE_TRIPOD, MovementRequest::MOVE_RIPPLE,
+                                           MovementRequest::MOVE_WAVE, MovementRequest::MOVE_CRAWL,
+                                           MovementRequest::MOVE_COMBINED));
+
+TEST_F(FaceMovementTest, StandUpRetainsItsHeadYawWhileFollowing) {
+    auto seed = initialPose();
+    seed.head_orientation.yaw = 12.0;
+    feedback->publish(seed);
     pump(150ms);
-    EXPECT_EQ(poses.size(), count);
+    handler->toggleOverlays(true, false);
+    request(MovementRequest::SEQUENCE_STAND_UP);
+    poses.clear();
+    pump(250ms);
+    ASSERT_FALSE(poses.empty());
+    EXPECT_GT(poses.back().head_orientation.yaw, 0.0);
 }
 
 TEST_F(MovementHandlerTest, WaitsForFeedbackAndDoesNotStartDurationEarly) {

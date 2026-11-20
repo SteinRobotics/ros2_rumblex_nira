@@ -95,12 +95,12 @@ class MovementAuthoringTest(unittest.TestCase):
             self.assertAlmostEqual(y, 2)
 
     def test_mixed_audio_sensor_and_pose_actions(self):
-        actions = [builtin('HOLD_DISTANCE', 4, distance_m=0.6), builtin('LEVEL_TORSO', 3),
+        actions = [builtin('HOLD_DISTANCE', 4, distance_m=0.6),
                    pose(0.5, save=True, pose_delta={'head_rotation': {'yaw': 5}}),
                    {'say': {'text': 'Hi', 'minDuration': 2}, 'music': {'song': 'song.mp3', 'background': True}},
                    pose(0.5, restore=True)]
         sequence = Sequence('mixed').extend(actions)
-        self.assertEqual(sequence.summary(), (5, 10))
+        self.assertEqual(sequence.summary(), (4, 7))
         self.assertTrue(any('Sensor-driven' in note for note in sequence_notes(sequence)))
         self.assertTrue(any('Audio' in note for note in sequence_notes(sequence)))
         invalid = builtin('HOLD_DISTANCE', 4, distance_m=0.5)
@@ -230,7 +230,7 @@ class EditorTest(unittest.TestCase):
     def test_forms_invalid_edits_and_save_pair_drafts(self):
         e = self.editor
         for kind in ('Travel', 'Turn', 'Arc', 'Velocity', 'Pose offset', 'Hold', 'Save pose',
-                     'Restore pose', 'Stand up', 'Lay down', 'Stop', 'Say', 'Music', 'Hold distance', 'Level torso'):
+                     'Restore pose', 'Stand up', 'Lay down', 'Stop', 'Say', 'Music', 'Hold distance'):
             e.kind.set(kind)
             e.compose_fields()
             from sequence_generator import validate_action

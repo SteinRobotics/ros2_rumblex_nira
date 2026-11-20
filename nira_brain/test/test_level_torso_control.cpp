@@ -31,6 +31,9 @@ TEST(LevelTorsoControl, RespectsTiltRateLimitsAndDeadband) {
     tilt = control.update({0.01, -0.01}, 0.02);
     EXPECT_DOUBLE_EQ(tilt.roll, 0.03);
     EXPECT_DOUBLE_EQ(tilt.pitch, -0.04);
+    tilt = control.release(0.1);
+    EXPECT_NEAR(tilt.roll, 0.0265, 1e-12);
+    EXPECT_NEAR(tilt.pitch, -0.0365, 1e-12);
 }
 TEST(LevelTorsoControl, RejectsInvalidInputs) {
     LevelTorsoLaw control(settings);

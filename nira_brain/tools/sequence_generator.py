@@ -19,7 +19,7 @@ CURVES = ('linear', 'sin_squared', 'sin', 'cos')
 GAITS = ('MOVE_COMBINED', 'MOVE_TRIPOD', 'MOVE_RIPPLE', 'MOVE_WAVE', 'MOVE_CRAWL')
 BUILTINS = ('CONTINUOUS_POSE', 'SEQUENCE_STAND_UP', 'SEQUENCE_LAYDOWN', 'SEQUENCE_WAITING',
             'SEQUENCE_WATCH', 'SEQUENCE_DANCE', 'SEQUENCE_LEGS_WAVE', 'SEQUENCE_BODY_ROLL',
-            'SEQUENCE_BITE', 'SEQUENCE_STOMP', 'SEQUENCE_TESTLEGS', 'HOLD_DISTANCE', 'LEVEL_TORSO')
+            'SEQUENCE_BITE', 'SEQUENCE_STOMP', 'SEQUENCE_TESTLEGS', 'HOLD_DISTANCE')
 PRESETS = ('square', 'circle', 'figure_eight', 'forward', 'curious_look', 'dance_rock', 'dance_metal')
 
 
@@ -132,6 +132,8 @@ class Sequence:
                                     any(not isinstance(v, str) or not v for v in trigger.values())):
             raise ValueError('Triggers must be nonempty voice/joystick strings')
         self.name = name
+        if trigger and trigger.get('joystick') in ('button_a', 'button_b'):
+            raise ValueError('Controller A and B are reserved for pose overlays')
         self.trigger = copy.deepcopy(trigger)
         self.actions = []
 
@@ -499,7 +501,7 @@ def validate_action(action):
                 raise ValueError('distance_m requires HOLD_DISTANCE')
             if 'direction' in movement and movement['direction'] not in ('CLOCKWISE', 'ANTICLOCKWISE'):
                 raise ValueError('Unknown direction')
-            if name in ('HOLD_DISTANCE', 'LEVEL_TORSO') and 'velocity' in action:
+            if name == 'HOLD_DISTANCE' and 'velocity' in action:
                 raise ValueError('Sensor gaits own their velocity')
             durations.append(max(duration, nonnegative(movement.get('minDuration', 0), 'minDuration')))
     elif 'movement' in action:
@@ -649,7 +651,7 @@ def sequence_notes(sequence):
         if last.get('movement', {}).get('name') != 'CONTINUOUS_POSE' or not velocity or any(
                 n != 0 for field in ('linear', 'angular') for n in velocity.get(field, {}).values()):
             notes.append('Add Stop at the end: timed walking does not clear the velocity command.')
-    if any(a.get('movement', {}).get('name') in ('HOLD_DISTANCE', 'LEVEL_TORSO') for a in actions):
+    if any(a.get('movement', {}).get('name') == 'HOLD_DISTANCE' for a in actions):
         notes.append('Sensor-driven travel is unknown and is not drawn in the route preview.')
     if any('say' in a or 'music' in a for a in actions):
         notes.append('Audio completion can extend the nominal timeline.')

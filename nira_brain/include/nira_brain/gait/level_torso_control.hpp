@@ -27,6 +27,7 @@ class LevelTorsoLaw {
     explicit LevelTorsoLaw(LevelTorsoSettings settings) : settings_(settings) {
     }
     void reset(TorsoTilt initial);
+    TorsoTilt release(double dt);
     TorsoTilt update(TorsoTilt measured, double dt);
 
    private:
@@ -34,13 +35,12 @@ class LevelTorsoLaw {
     TorsoTilt tilt_;
 };
 
-// Owns only this gait's sensor subscription and measurement validation.
+// Fresh IMU tilt expressed in the configured body frame.
 class ImuFeedback {
    public:
     explicit ImuFeedback(const std::shared_ptr<rclcpp::Node>& node);
     std::optional<TorsoTilt> tilt() const;
     const double freshness_s;
-    const double startup_timeout_s;
 
    private:
     std::string body_frame_;

@@ -34,19 +34,21 @@ selection thresholds remain scalars. Gait timing,
 velocity limits, robot-specific configuration, and monitoring thresholds are
 unchanged. See [MOVEMENT.md](MOVEMENT.md) for the motion pipeline and build setup.
 
-## Offline face preview
+## Standing and walking pose overlays
 
-Nira's desktop test launch enables `face_tracking.desktop_preview` in the brain.
-For the fixed host camera, the torso takes the first 10° of yaw and pitch
-independently, and the head takes the remaining angle within its configured
-limits. Torso roll mirrors the tracked face’s eye-line tilt up to 10°.
-`CMovement` publishes these orientations together while idle, preserving torso
-translation and toe positions. Missing observations hold the pose. If only
-the eye-line measurement is unavailable, yaw and pitch continue tracking.
-Any movement request, nonzero velocity request, or cancellation disables preview;
-`/brain/set_face_tracking` explicitly re-enables it once the operator is ready.
+Tap **A / Cross** to toggle Follow Face and **B / Circle** to toggle Level Torso.
+Both start off and can run together. They apply during stand-up, standing hold,
+and all five move gaits. Other gaits pause the features. Returning to stand-up or
+walking resumes them with fresh sensor data.
 
-Limits/gain are in `config/nira/parameter.yaml`. The mode defaults to false in
-`brain_launch.py` and is not wired into physical `target_launch.py`. Physical
-camera TF, feedback-based control, actuator limit enforcement, and commissioning
-remain required before hardware face tracking is enabled.
+Face following uses up to 5° of torso yaw and pitch before directing the head,
+and up to 5° of torso roll for eye-line tilt. The fixed desktop camera supplies
+an absolute pointing direction. The calibrated head camera supplies pointing
+error relative to its current view. IMU leveling adds a separate roll/pitch
+correction. The final orientation respects remaining travel around the gait pose.
+During move gaits, Follow Face replaces the gait’s side-to-side head scan with
+tracking yaw. The scan resumes when Follow Face is switched off.
+Switching a feature off or losing its input slews its correction back to zero.
+
+Face tracking settings live in `config/nira/parameter.yaml` and leveling settings
+in `config/nira/gait.yaml`. See [controller and hardware commands](../COMMANDS.md).

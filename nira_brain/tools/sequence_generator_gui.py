@@ -25,7 +25,7 @@ GOLD = '#efbb72'
 
 KINDS = ('Travel', 'Turn', 'Arc', 'Velocity', 'Pose offset', 'Hold', 'Save pose',
          'Restore pose', 'Stand up', 'Lay down', 'Stop', 'Say', 'Music',
-         'Hold distance', 'Level torso')
+         'Hold distance')
 
 
 def describe(action):
@@ -348,7 +348,7 @@ class SequenceEditor:
             validate_action(action)
             return action
         return builtin({'Stand up': 'SEQUENCE_STAND_UP', 'Lay down': 'SEQUENCE_LAYDOWN',
-                        'Hold distance': 'HOLD_DISTANCE', 'Level torso': 'LEVEL_TORSO'}[kind], duration,
+                        'Hold distance': 'HOLD_DISTANCE'}[kind], duration,
                        distance_m=number('distance') if kind == 'Hold distance' else None)
 
     def _timeline(self, parent):

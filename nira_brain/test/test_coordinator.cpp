@@ -170,6 +170,32 @@ TEST_F(CoordinatorTest, CancellationAllowsSchedulingBeforeMotionStops) {
     EXPECT_FALSE(movement.motionStopped());
 }
 
+TEST_F(CoordinatorTest, OverlayTapsPreserveTheSequenceAndAcceptSimultaneousStickChanges) {
+    create();
+    feedback(MovementRequest::SEQUENCE_STAND_UP);
+    nira_interfaces::msg::JoystickRequest input;
+    input.button_a = input.button_b = true;
+    coordinator_->joystickRequestReceived(input);
+    input.button_a = input.button_b = false;
+    coordinator_->joystickRequestReceived(input);
+    EXPECT_EQ(ActionPlannerTestAccess::normalCount(*planner_), 0u);
+    EXPECT_EQ(ActionPlannerTestAccess::highCount(*planner_), 0u);
+    input.button_a = true;
+    input.left_stick_vertical = 0.5;
+    coordinator_->joystickRequestReceived(input);
+    const auto& moving = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    ASSERT_EQ(moving.size(), 2u);
+    EXPECT_GT(std::dynamic_pointer_cast<RequestVelocity>(moving.back())->velocity.linear.x, 0);
+    feedback(MovementRequest::MOVE_TRIPOD);
+    input.left_stick_vertical = 0;
+    input.button_b = true;
+    coordinator_->joystickRequestReceived(input);
+    const auto& stopped = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    ASSERT_EQ(stopped.size(), 1u);
+    EXPECT_EQ(std::dynamic_pointer_cast<RequestVelocity>(stopped.front())->velocity,
+              geometry_msgs::msg::Twist());
+}
+
 TEST_F(CoordinatorTest, JoystickPoseModeActivatesGaitAndGroupsOrientationTargets) {
     create();
     nira_interfaces::msg::JoystickRequest request;

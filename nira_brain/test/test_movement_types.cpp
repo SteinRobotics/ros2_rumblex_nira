@@ -69,7 +69,7 @@ TEST(MovementValidation, SensorRulesDoNotApplyToOrdinaryPoseDurations) {
     EXPECT_TRUE(request.validDistance());
     request.body_pose.has_head_orientation = true;
     EXPECT_FALSE(request.validSensorPose());
-    request.type = MovementRequest::LEVEL_TORSO;
+    request.type = MovementRequest::MOVE_TRIPOD;
     EXPECT_FALSE(request.validDistance());
     request.distance_m.reset();
     EXPECT_TRUE(request.validDistance());

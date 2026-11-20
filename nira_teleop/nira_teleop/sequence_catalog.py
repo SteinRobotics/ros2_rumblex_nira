@@ -9,7 +9,7 @@ import yaml
 TRIGGER_CONTROLS = {
     # Start is intercepted by the coordinator for gait cycling.
     **{f'button_{name}': name for name in
-       ('a', 'b', 'x', 'y', 'l1', 'l2', 'r1', 'r2', 'select', 'home')},
+       ('x', 'y', 'l1', 'l2', 'r1', 'r2', 'select', 'home')},
     'dpad_vertical_up': 'dpad_up', 'dpad_vertical_down': 'dpad_down',
     'dpad_horizontal_left': 'dpad_left', 'dpad_horizontal_right': 'dpad_right',
 }
@@ -26,7 +26,7 @@ def load_catalog(directory):
     directory = Path(directory)
     if not directory.is_dir():
         raise ValueError(f'Sequence directory does not exist: {directory}')
-    captions = {}
+    captions = {'a': 'Follow face', 'b': 'Level torso'}
     extras = []
     names = set()
     for path in sorted(directory.iterdir()):

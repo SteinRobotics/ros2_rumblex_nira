@@ -26,18 +26,14 @@ Repeating requests finish when their dwell deadline expires, measured from gait
 activation; this does not request a stop. Repeating requests reset that deadline
 when resubmitted. Dwell deadlines continue to use the ROS clock.
 
-`HOLD_DISTANCE` and `LEVEL_TORSO` are finite `ISequenceGait` implementations,
-selected by the same `RequestMovementType` as other gaits. The former accepts an
-optional C++ `MovementRequest::distance_m` field which is required for that gait;
-the latter has no distance target. Each gait owns its sensor subscription, control
-state, startup checks, duration, and stopping. Holding distance composes the
-existing pose and walking gaits with head scanning disabled; leveling retains a
-standing set of toe targets. There is no feedback overlay in the movement handler.
-`hold_distance_control` owns range acquisition, beam validation, distance settings,
-and speed calculation. `level_torso_control` owns IMU acquisition, orientation
-transforms, leveling settings, and tilt calculation. Each has a separate reader
-(`RangeFeedback` or `ImuFeedback`); there is no sensor-mode switch. Small stateless
-parameter, timestamp, quaternion, and update-interval checks are shared privately.
+`HOLD_DISTANCE` uses a finite sequence gait with a required `distance_m` target.
+It owns its range subscription, head preparation, and walking velocity.
+
+After each stand-up or locomotion update, the movement handler composes the
+selected face and IMU corrections onto a copy of the base pose. The gait model
+retains its independent trajectory, including toe positions and velocity.
+Controller taps toggle each correction independently of the scheduler.
+
 Autonomous gaits report velocity through `IGait::commandedVelocity()`. On a sensor
 error, the gait logs the reason, requests a stop, and sets a one-shot sequence-abort
 flag. The planner consumes it immediately after dispatch or update and removes the

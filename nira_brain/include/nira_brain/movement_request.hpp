@@ -59,7 +59,6 @@ struct MovementRequest {
         MOVE_COMBINED = 31,
         MOVE_TRIPOD = 32,
         HOLD_DISTANCE = 33,
-        LEVEL_TORSO = 34,
         MOVE_RIPPLE = 35,
         MOVE_WAVE = 36,
         MOVE_CRAWL = 37,
@@ -103,7 +102,7 @@ struct MovementRequest {
                (type == SINGLE_POSE && !hasBodyTarget() && pose_delta->valid() && hasPositiveDuration());
     }
     bool isSensorGait() const {
-        return type == HOLD_DISTANCE || type == LEVEL_TORSO;
+        return type == HOLD_DISTANCE;
     }
     bool validSensorPose() const {
         return !isSensorGait() || (hasPositiveDuration() && !hasBodyTarget());

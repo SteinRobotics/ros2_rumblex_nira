@@ -12,7 +12,9 @@ The GUI requires a desktop display and uses the existing Pygame dependency;
 no physical joystick is needed.
 
 The GUI reads the installed `nira_brain/config/sequences` YAML catalog at
-startup. Each mapped controller button shows its exact sequence name underneath.
+startup. On both controllers, tap **Cross (A)** for Follow Face or **Circle (B)**
+for Level Torso. A second tap switches the same feature off. Both can run
+together during stand-up, standing hold and walking. Each sequence-mapped controller button shows its exact sequence name underneath.
 The **Additional sequences** panel provides a named button for every sequence
 without an available controller mapping. Click and release a button to run it;
 scroll within the panel when the list exceeds the visible area. Releasing outside
@@ -50,7 +52,8 @@ The GUI publishes `nira_interfaces/msg/JoystickRequest` on `joystick_request`
 with the same queue depth (10), 0.004 stick deadzone, and two-second long-press
 threshold as the hardware node. A short press is emitted on release; holding a
 button for two seconds activates its long-press field without a short press.
-Changed states are published at approximately 100 ms intervals, including cleared
+A/B taps publish on release so rapid taps remain distinct. Other changed states
+are sampled at approximately 100 ms intervals, including cleared
 button pulses and centered sticks. Focus loss and closing the window clear all
 controls immediately without creating button actions.
 

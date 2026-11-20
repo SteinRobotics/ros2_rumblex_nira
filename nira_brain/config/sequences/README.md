@@ -10,7 +10,7 @@ The brain loads every `.yaml` and `.yml` file directly in `config/sequences`,
 ordered by filename. Each file defines a named sequence, optional voice/joystick
 triggers, and actions. The former `normal_` name prefix has been removed: use
 `body_roll`, `high_five`, `leg_wave`, `look_left`, `look_right`, `test_body`,
-`test_legs`, and `watch`. Voice and joystick triggers are unchanged.
+`test_legs`, and `watch`. Controller A and B are reserved for Follow Face and Level Torso. Request `watch` and `high_five` by name or voice.
 When updating an existing installation, remove the obsolete `normal_*.yaml` files
 from its installed `config/sequences` directory before restarting the brain and
 GUI; incremental installation may otherwise leave both catalogs present.
@@ -19,7 +19,7 @@ GUI; incremental installation may otherwise leave both catalogs present.
 name: example
 trigger:
   voice: commandExample
-  joystick: button_a
+  joystick: button_x
 actions:
   - say: Starting
   - include: snippets/example.yaml
@@ -234,8 +234,7 @@ the active pose finish. It does not run the remaining clap return actions.
 `high_five.yaml` raises the right-front leg to joint angles
 `(-20, 50, 60)` degrees and looks forward with head pitch `-20` degrees over one
 second, holds for two seconds, then restores the starting pose over one second.
-The spoken announcement, `commandHighFive` voice trigger and `button_b` joystick
-trigger are unchanged. Speech completion can delay the following action, as with
+The spoken announcement and `commandHighFive` voice trigger remain available. Speech completion can delay the following action, as with
 other grouped actions. The old `SEQUENCE_HIGH_FIVE` movement selector is removed.
 
 `SINGLE_POSE` movements accept `joint_targets` keyed by leg name. Omitted legs
@@ -404,7 +403,6 @@ gracefully while retaining the resulting pose.
 | Sequence | Preset | Required sensor |
 | --- | --- | --- |
 | `hold_distance` | Maintain 0.6 m for 10 seconds | 1D lidar |
-| `level_torso` | Level torso for 5 seconds | IMU |
 | `waiting` | Waiting motion for 5 seconds | None |
 | `run_demo` | Run forward at 0.03 m/s for 3 seconds | None |
 
@@ -415,14 +413,13 @@ Install updated catalog files as needed, then restart the brain and GUI.
 Sensor failures retain the abort behavior described below, including stopping
 generated movement and removing the invocation's remaining actions.
 
-Two independent gaits use the existing `movement` action and `RequestMovementType`:
+The range gait uses the existing `movement` action and `RequestMovementType`:
 
 ```yaml
 name: sensor_demo
 actions:
   - movement: {name: SEQUENCE_STAND_UP, duration_s: 1.5}
   - movement: {name: HOLD_DISTANCE, distance_m: 0.6, duration_s: 10.0}
-  - movement: {name: LEVEL_TORSO, duration_s: 5.0}
   - say: Finished
 ```
 
@@ -430,27 +427,23 @@ actions:
   distance. It keeps the torso pose fixed, prepares the head to forward-neutral
   over one second, and suppresses gait head scanning. It needs no IMU data or IMU
   configuration.
-- `LEVEL_TORSO` uses **only IMU orientation** to level torso roll/pitch while
-  standing. The feet, torso position/yaw, and head pose are retained. It starts no
-  walking gait and needs no lidar data or lidar configuration.
 
-Both gaits require the robot to be standing at a rest endpoint. `duration_s`
+The range gait requires the robot to be standing at a rest endpoint. `duration_s`
 defaults to 1.0 seconds, as for other movements, and must be positive and finite.
 `distance_m` is required only for `HOLD_DISTANCE` and must be positive and finite;
 other gaits reject it. Loops and snippets work through the usual movement parser.
-These gaits own their velocity and pose targets: do not combine them with a
+This gait owns its velocity and pose targets: do not combine them with a
 `velocity` action or `body_pose` target. Communication actions can share the group.
-The former standalone `hold_distance`/`level_torso` action keys are removed.
 
 The duration starts after the preceding gait settles, required preparation
 finishes, and the required sensor/TF is available. The gait reports completion
 through its normal stopped state after its duration and graceful stopping. The final torso pose is retained. Cancellation
 clears controller state and generated velocity.
 
-Configure each gait separately under `hold_distance.*` and `level_torso.*` in
-`config/nira/gait.yaml`. Parameters are read when the gait starts;
-restart the node after changing its parameter file. Both profiles have
-`body_frame: base_link`, `freshness_s: 0.5`, and `startup_timeout_s: 2.0`.
+Configure the range gait under `hold_distance.*` in `config/nira/gait.yaml`.
+IMU leveling is a B / Circle pose overlay with separate `level_torso.*` settings.
+Both use `body_frame: base_link` and `freshness_s: 0.5`. The range gait also uses
+`startup_timeout_s: 2.0`.
 Startup timeout applies while the gait waits for its required sensor and mounting
 TF, after any head preparation. Before initial pose feedback, requests use the
 same deferred-start behavior as all other movement requests. Freshness checks both

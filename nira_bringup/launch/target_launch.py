@@ -69,6 +69,12 @@ def generate_launch_description():
             "camera_info_url": LaunchConfiguration("camera_info_url"),
         }.items(),
     )
+    face_detector = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [FindPackageShare("nira_perception_face"), "/launch/face_tracking_launch.py"]
+        ),
+        condition=IfCondition(LaunchConfiguration("enable_camera")),
+    )
     bno055_config = PathJoinSubstitution(
         [FindPackageShare("nira_bringup"), "config", "nira", "bno055_params.yaml"]
     )
@@ -125,6 +131,7 @@ def generate_launch_description():
             movement,
             teleop,
             lidar,
+            face_detector,
             bno055,
             brain,
             navigation,
