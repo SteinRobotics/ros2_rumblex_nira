@@ -3,16 +3,7 @@
 ## Terminal environment
 
 ```bash
-cd /home/christian/Workspace/colcon_nira
-source /opt/ros/lyrical/setup.bash
-source .venv/bin/activate
-
-python -m colcon build --symlink-install
-```
-
-From the repository, activate its environment without inheriting another workspace:
-
-```bash
+cd ~/Workspace/colcon_nira/src/ros2_rumblex_nira
 source scripts/environment.sh
 cd ~/Workspace/colcon_nira
 ```
@@ -36,24 +27,32 @@ inspect logs and resume only a smaller focused batch; never rerun the full workl
 
 ## Build
 
-The editor tasks use `scripts/build.sh`, which applies the resource limits automatically.
-Run `bash scripts/build.sh nira_movement` from this repository for a focused build
-and its dependencies, or omit the package to build the workspace.
-
-Install dependencies using rosdep and the setup/package documentation first.
+From the repository root, choose the build for the target machine. Both entry points use the same resource limits as the editor tasks.
 
 ```bash
-export MAKEFLAGS='-j2 -l2'
-export CMAKE_BUILD_PARALLEL_LEVEL=2
-export CTEST_PARALLEL_LEVEL=1
-nira_limited colcon build --symlink-install --executor sequential \
-  --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-source install/local_setup.bash
+./build_pc.sh                    # all packages in workspace/src
+./build_robot.sh                 # physical bringup and its dependencies
+./build_robot.sh nira_movement   # focused build within that set
 ```
 
-For a focused build add `--packages-up-to nira_movement` (or another target).
-Private speech resources and external hardware drivers require the setup described
-in [README_SETUP.md](README_SETUP.md). Do not disable resource controls to complete a build.
+For editor tasks and direct calls to `scripts/build.sh`, the wrapper reads the command-line profile first, then `NIRA_BUILD_PROFILE`, then
+`${XDG_CONFIG_HOME:-$HOME/.config}/nira/build-profile`. The default is `desktop`.
+Pi provisioning writes `robot` to that file. For an existing robot, set
+`export NIRA_BUILD_PROFILE=robot` in its build environment or create the same
+one-line file. Raw `colcon build` uses colcon's own selection rules.
+
+The robot profile builds Release with tests disabled. Pi provisioning passes the
+same source package paths to rosdep, including the lidar driver and any source
+checkout of usb_cam. On the desktop use the whole workspace's `src` as the
+rosdep input. Follow [setup](SETUP.md) for external drivers and Python dependencies.
+To inspect the robot selection from the workspace root after sourcing the environment:
+
+```bash
+python -m colcon list --base-paths src --packages-up-to nira_bringup --names-only
+```
+
+Switching profiles in an existing workspace leaves previously installed packages
+and system dependencies in place. Use a fresh workspace to verify a headless installation.
 
 ## Tests
 

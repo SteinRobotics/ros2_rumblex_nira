@@ -32,7 +32,7 @@ No images or identities are stored.
 For a laptop camera and offline torso and head visualization:
 
 ```bash
-ros2 launch nira_bringup test_launch.py
+ros2 launch nira_viz test_launch.py
 ```
 
 Tap A / Cross during stand-up or walking to follow the detected face. Hardware

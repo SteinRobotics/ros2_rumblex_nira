@@ -13,16 +13,17 @@ Clone into `~/Workspace/colcon_nira/src/ros2_rumblex_nira`.
 git clone https://github.com/SteinRobotics/ros2_rumblex_nira.git
 ```
 
-Follow [setup](README_SETUP.md), [build and test](BUILD.md), and
-[launch commands](README_LAUNCH.md). [Resource limits](nira_doc/BUILD_AND_TEST.md)
-apply to builds, tests, simulation and CAD jobs.
+Follow [setup](SETUP.md), [build and test](BUILD.md), and
+[launch commands](LAUNCH.md). [Resource limits](nira_doc/BUILD_AND_TEST.md)
+apply to builds, tests, simulation and CAD jobs. From the repository root, run
+`./build_pc.sh` for the full workspace or `./build_robot.sh` for the headless hardware stack.
 
 ## Packages and hardware
 
 Core packages are `nira_brain`, `nira_movement`, `nira_interfaces`,
 `nira_utils`, `nira_communication`, `nira_hmi` and `nira_teleop`.
 `nira_bringup` assembles the hardware stack; `nira_description`,
-`nira_gazebo` and `nira_navigation` supply models, simulation and navigation.
+`nira_viz`, `nira_gazebo` and `nira_navigation` supply models, desktop visualization, simulation and navigation.
 
 Nira uses Feetech servos, YDLIDAR 2D lidar, an OBSBOT camera and face perception.
 See [sensors](SENSORS.md), [bill of materials](BOM_NIRA.md), and

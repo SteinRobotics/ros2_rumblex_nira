@@ -6,7 +6,7 @@ Build `nira_teleop` and source the workspace, then launch the PS3-style GUI:
 ros2 launch nira_teleop teleop_simulated_launch.py
 ```
 
-It also starts by default with `ros2 launch nira_bringup test_launch.py`.
+It also starts by default with `ros2 launch nira_viz test_launch.py`.
 For headless test bringup, add `enable_simulated_teleop:=false`.
 The GUI requires a desktop display and uses the existing Pygame dependency;
 no physical joystick is needed.

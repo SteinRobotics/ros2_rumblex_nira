@@ -105,7 +105,7 @@ def _launch_nodes():
         launch_arguments={}.items(),
         condition=IfCondition(enable_lidar),
     )
-    rviz_config = os.path.join(pkg_description, "rviz", "model.rviz")
+    rviz_config = os.path.join(get_package_share_directory("nira_viz"), "rviz", "model.rviz")
     rviz = Node(
         package="rviz2",
         executable="rviz2",

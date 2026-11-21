@@ -17,8 +17,8 @@ bash scripts/setup_raspberry_pi.sh
 ```
 
 The script installs system dependencies, a workspace virtual environment, runtime
-packages, device rules and a lingering systemd user service. It changes the Pi and
-requires sudo. It is not a desktop setup command. Follow the resource limits in
+packages selected from the dependencies of `nira_bringup`, device rules and a lingering systemd user service. It changes the Pi and
+records the `robot` build profile for future `bash scripts/build.sh` runs and requires sudo. It is not a desktop setup command. Follow the resource limits in
 [nira_doc/BUILD_AND_TEST.md](nira_doc/BUILD_AND_TEST.md) when building manually.
 
 Provide private wake-word models and online speech credentials separately.
@@ -37,7 +37,7 @@ The environments are independent; CAD retains its dedicated environment.
 Use rosdep against this repository for ROS dependencies and use the robot-owned requirements files for Python dependencies. Keep private models, caches and credentials
 outside version control. See [BUILD.md](BUILD.md) for build commands and sourcing.
 
-Follow [README_LAUNCH.md](README_LAUNCH.md) for desktop and hardware entry points;
+Follow [LAUNCH.md](LAUNCH.md) for desktop and hardware entry points;
 [the BOM](BOM_NIRA.md) and [SENSORS.md](SENSORS.md) describe the actual hardware.
 
 Activate the workspace with `source scripts/environment.sh`; it clears inherited

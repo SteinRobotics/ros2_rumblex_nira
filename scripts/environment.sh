@@ -18,7 +18,8 @@ source /opt/ros/lyrical/setup.bash
 if [[ -f "$robot_env_workspace/.venv/bin/activate" ]]; then
     source "$robot_env_workspace/.venv/bin/activate"
 fi
-if [[ -f "$robot_env_workspace/install/local_setup.bash" ]]; then
+# Builds discover dependencies from src and should not inherit an older install.
+if [[ ${1:-} != --underlay-only && -f "$robot_env_workspace/install/local_setup.bash" ]]; then
     source "$robot_env_workspace/install/local_setup.bash"
 fi
 if [[ -d "$robot_env_workspace/vendor/install" ]]; then

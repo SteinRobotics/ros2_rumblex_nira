@@ -11,7 +11,7 @@ from nira_interfaces.srv import ServoDashboard
 
 @pytest.fixture
 def backend(monkeypatch):
-    lib = Path(get_package_prefix("nira_movement")) / "lib" / "nira_movement"
+    lib = Path(get_package_prefix("nira_viz")) / "lib" / "nira_viz"
     gui = lib / "servo_gui"
     for asset in ("chevron-up.svg", "chevron-down.svg"):
         assert (gui / "assets" / asset).is_file()

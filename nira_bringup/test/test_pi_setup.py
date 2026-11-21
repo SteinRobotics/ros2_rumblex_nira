@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import subprocess
+import xml.etree.ElementTree as ET
 
 import pytest
 import yaml
@@ -46,6 +47,22 @@ def test_target_imu_configuration_exists(robot):
     parameters = config["bno055"]["ros__parameters"]
     assert parameters["connection_type"] == "i2c"
     assert parameters["frame_id"] == "imu_link"
+
+
+def test_robot_profile_excludes_desktop_packages_and_dependencies(tmp_path):
+    result = subprocess.run(
+        ["bash", "-ec", 'source "$1/scripts/robot_packages.sh"; robot_package_paths "$1"; '
+         'printf "%s\\n" "${robot_paths[@]}"', "bash", str(ROOT)],
+        cwd=tmp_path, capture_output=True, text=True, check=True,
+    )
+    manifests = [ET.parse(tmp_path / path / "package.xml").getroot()
+                 for path in result.stdout.splitlines()]
+    packages = {manifest.findtext("name") for manifest in manifests}
+    dependencies = {entry.text for manifest in manifests for entry in manifest
+                    if entry.tag.endswith("depend")}
+    assert {"nira_bringup", "nira_description", "nira_lidar_2d"} <= packages
+    assert {"nira_viz", "nira_gazebo"}.isdisjoint(packages)
+    assert {"rviz2", "ros_gz_sim", "joint_state_publisher_gui", "python3-pyside6.qtwidgets"}.isdisjoint(dependencies)
 
 
 @pytest.fixture

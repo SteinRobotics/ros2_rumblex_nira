@@ -3,6 +3,22 @@
 set -eo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 workspace=$(cd "$repo/../.." && pwd -P)
+profile_file="${XDG_CONFIG_HOME:-$HOME/.config}/nira/build-profile"
+if [[ ${1:-} == --profile ]]; then
+    profile=${2:-}
+    [[ $# -ge 2 ]] || { echo 'Expected --profile robot or desktop' >&2; exit 2; }
+    shift 2
+elif [[ -n ${NIRA_BUILD_PROFILE:-} ]]; then
+    profile=$NIRA_BUILD_PROFILE
+elif [[ -f $profile_file ]]; then
+    profile=$(cat "$profile_file")
+else
+    profile=desktop
+fi
+case "$profile" in
+    robot|desktop) ;;
+    *) echo "Unknown build profile: $profile (expected robot or desktop)" >&2; exit 2 ;;
+esac
 packages=()
 for package in "$@"; do
     [[ $package =~ ^[a-z][a-z0-9_]*$ && -f "$repo/$package/package.xml" ]] || {
@@ -12,8 +28,16 @@ for package in "$@"; do
 done
 selection=()
 if (( ${#packages[@]} )); then selection=(--packages-up-to "${packages[@]}"); fi
-source "$repo/scripts/environment.sh"
+source "$repo/scripts/environment.sh" --underlay-only
 cd "$workspace"
+discovery=(--base-paths "$workspace/src")
+cmake_options=(-DBUILD_TESTING=ON)
+if [[ $profile == robot ]]; then
+    source "$repo/scripts/robot_packages.sh"
+    robot_package_paths "$workspace/src"
+    discovery=(--paths "${robot_paths[@]}")
+    cmake_options=(-DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release)
+fi
 workers=2
 memory_high=6G
 memory_max=8G
@@ -39,5 +63,5 @@ flock --nonblock "/tmp/rumblex-heavy-$(id -u).lock" \
       [[ $value =~ ^[0-9]+$ ]] || exit 1
     done
     exec "$@"
-  ' bash python -m colcon build --symlink-install --executor sequential "${selection[@]}" \
-    --cmake-args -DPython3_EXECUTABLE="$(command -v python)" -DPYTHON_EXECUTABLE="$(command -v python)"
+  ' bash python -m colcon build --symlink-install --executor sequential "${discovery[@]}" "${selection[@]}" \
+    --cmake-args "${cmake_options[@]}" -DPython3_EXECUTABLE="$(command -v python)" -DPYTHON_EXECUTABLE="$(command -v python)"

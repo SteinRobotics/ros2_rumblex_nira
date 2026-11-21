@@ -9,7 +9,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <test_depend>ament_cmake_gtest</test_depend>
-  <test_depend>ament_cmake_pytest</test_depend>
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
@@ -24,8 +23,6 @@
   <depend>yaml-cpp</depend>
 
   <exec_depend>rclpy</exec_depend>
-  <exec_depend>python3-pyside6.qtwidgets</exec_depend>
-  <exec_depend>python3-serial</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>nira_description</exec_depend>

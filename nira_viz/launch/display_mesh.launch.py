@@ -34,7 +34,7 @@ def _launch_nodes():
             executable="rviz2",
             arguments=[
                 "-d",
-                os.path.join(share, "rviz", "model.rviz"),
+                os.path.join(get_package_share_directory("nira_viz"), "rviz", "model.rviz"),
                 "-f",
                 LaunchConfiguration("fixed_frame"),
             ],

@@ -67,7 +67,7 @@ def generate_launch_description():
                         PythonLaunchDescriptionSource(
                             PathJoinSubstitution(
                                 [
-                                    FindPackageShare("nira_bringup"),
+                                    FindPackageShare("nira_viz"),
                                     "launch",
                                     "test_launch.py",
                                 ]

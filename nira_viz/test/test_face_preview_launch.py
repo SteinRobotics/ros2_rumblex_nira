@@ -10,9 +10,9 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def module(name="test_launch"):
+def module(name="test_launch", package="nira_viz"):
     spec = importlib.util.spec_from_file_location(
-        name, ROOT / f"nira_bringup/launch/{name}.py"
+        name, ROOT / f"{package}/launch/{name}.py"
     )
     result = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(result)
@@ -68,7 +68,7 @@ def test_disabled_does_not_resolve_camera_or_face_packages():
 
 
 def test_target_detector_follows_camera_and_uses_calibrated_mode():
-    launch = module("target_launch").generate_launch_description()
+    launch = module("target_launch", "nira_bringup").generate_launch_description()
     ctx = context()
     ctx.launch_configurations["enable_navigation"] = "false"
     detector, = [action for action in launch.entities

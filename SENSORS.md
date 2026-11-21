@@ -18,4 +18,4 @@ range simulator is a single-beam approximation, not a physical sensor validation
 
 BNO055 Breakoutboard CJMCU-055
 There are two solder pads for PS0 and PS1 which have to be bridged to either + or - pads to set the operating mode - I2C, UART serial etc. For I2C both are bridged to -.
-The ATX pin is SDA, and the LRX pin SCL. The only catch is the pin marked I2C which is connected to nothing other than the BNO055 and has to be grounded for the standard I2C address to apply.
+The ATX pin is SDA, and the LRX pin SCL. The only catch is the pin marked I-++++++++++++++++++++++++2C which is connected to nothing other than the BNO055 and has to be grounded for the standard I2C address to apply.

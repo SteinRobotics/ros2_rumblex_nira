@@ -88,52 +88,37 @@ set -u
 
 # Nira uses the SteinRobotics YDLIDAR fork over SSH.
 # Keep the SDK checkout; update the driver to the published lyrical branch safely.
-extra_packages=()
-# A source checkout is supported when usb_cam binaries are unavailable for Lyrical.
-# See nira_camera/README.md; leave dependency installation to rosdep otherwise.
-if [[ -f "$workspace/src/usb_cam/package.xml" ]]; then
-    extra_packages+=(usb_cam)
+vendor="$workspace/vendor"
+mkdir -p "$vendor"
+touch "$vendor/COLCON_IGNORE"
+if [[ ! -d $vendor/YDLidar-SDK ]]; then
+    git clone --depth 1 https://github.com/YDLIDAR/YDLidar-SDK.git "$vendor/YDLidar-SDK"
 fi
-    vendor="$workspace/vendor"
-    mkdir -p "$vendor"
-    touch "$vendor/COLCON_IGNORE"
-    if [[ ! -d $vendor/YDLidar-SDK ]]; then
-        git clone --depth 1 https://github.com/YDLIDAR/YDLidar-SDK.git "$vendor/YDLidar-SDK"
-    fi
-    limited_build cmake -S "$vendor/YDLidar-SDK" -B "$vendor/ydlidar-build" \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$workspace/vendor/install" \
-        -DBUILD_EXAMPLES=OFF -DBUILD_TEST=OFF -DCMAKE_DISABLE_FIND_PACKAGE_SWIG=ON -DSWIG_FOUND=FALSE
-    limited_build cmake --build "$vendor/ydlidar-build" --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
-    cmake --install "$vendor/ydlidar-build"
-    "$repo/scripts/update_ydlidar_driver.sh" "$workspace/src/ydlidar_ros2_driver"
-    export CMAKE_PREFIX_PATH="$workspace/vendor/install:${CMAKE_PREFIX_PATH:-}"
-    extra_packages+=(ydlidar_ros2_driver)
+limited_build cmake -S "$vendor/YDLidar-SDK" -B "$vendor/ydlidar-build" \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$workspace/vendor/install" \
+    -DBUILD_EXAMPLES=OFF -DBUILD_TEST=OFF -DCMAKE_DISABLE_FIND_PACKAGE_SWIG=ON -DSWIG_FOUND=FALSE
+limited_build cmake --build "$vendor/ydlidar-build" --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+cmake --install "$vendor/ydlidar-build"
+"$repo/scripts/update_ydlidar_driver.sh" "$workspace/src/ydlidar_ros2_driver"
+export CMAKE_PREFIX_PATH="$workspace/vendor/install:${CMAKE_PREFIX_PATH:-}"
 
-# Resolve only runtime packages. GUI/simulation dependencies in shared manifests
-# are intentionally skipped; pip dependencies above are satisfied in the venv.
-packages=(nira_interfaces nira_utils nira_brain nira_movement
-    nira_description nira_bringup nira_hmi nira_communication
-    nira_teleop nira_lidar_2d nira_camera nira_perception_face nira_navigation)
-paths=()
-for package in "${packages[@]}"; do paths+=("$repo/$package"); done
-for package in "${extra_packages[@]}"; do paths+=("$workspace/src/$package"); done
+source "$repo/scripts/robot_packages.sh"
+robot_package_paths "$workspace/src"
 if [[ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]]; then sudo rosdep init; fi
 rosdep update --rosdistro lyrical
-skip_keys='nira_gazebo ros_gz_sim rviz2 joint_state_publisher_gui python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip magic_enum fonts-liberation'
+skip_keys='python-google-cloud-speech-pip python3-sounddevice-pip python-gTTS-pip magic_enum fonts-liberation'
 # Disable recommended packages for rosdep's apt invocations as well.
 printf 'APT::Install-Recommends "false";\n' > "$scratch/apt.conf"
 sudo env APT_CONFIG="$scratch/apt.conf" /usr/bin/rosdep --sources-cache-dir "$HOME/.ros/rosdep/sources.cache" install \
-    --from-paths "${paths[@]}" --ignore-src --rosdistro lyrical -y \
+    --from-paths "${robot_paths[@]}" --ignore-src --rosdistro lyrical -y \
     --dependency-types build --dependency-types buildtool --dependency-types build_export \
     --dependency-types buildtool_export --dependency-types exec \
     --skip-keys "$skip_keys"
 cd "$workspace"
-limited_build python -m colcon build --base-paths "${paths[@]}" \
-    --packages-select "${packages[@]}" "${extra_packages[@]}" \
-    --symlink-install --executor sequential --event-handlers console_cohesion+ \
-    --cmake-args -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
-    -DPython3_EXECUTABLE="$workspace/.venv/bin/python" \
-    -DPYTHON_EXECUTABLE="$workspace/.venv/bin/python"
+profile_dir="${XDG_CONFIG_HOME:-$HOME/.config}/nira"
+mkdir -p "$profile_dir"
+printf 'robot\n' > "$profile_dir/build-profile"
+"$repo/build_robot.sh"
 set +u
 source "$workspace/install/local_setup.bash"
 set -u

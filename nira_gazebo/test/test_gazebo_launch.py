@@ -24,7 +24,7 @@ def load(package, filename):
 
 
 def test_composes_test_stack_without_duplicate_display():
-    module = load("nira_bringup", "test_gazebo_launch.py")
+    module = load("nira_gazebo", "test_gazebo_launch.py")
     group = next(
         a
         for a in module.generate_launch_description().entities
@@ -65,7 +65,7 @@ def test_composes_test_stack_without_duplicate_display():
 
 
 def test_gazebo_test_launch_spawns_map_without_rviz():
-    module = load("nira_bringup", "test_gazebo_launch.py")
+    module = load("nira_gazebo", "test_gazebo_launch.py")
     with patch.object(module, "Node", wraps=module.Node) as node:
         module.generate_launch_description()
     nodes = [call.kwargs for call in node.call_args_list]
@@ -75,7 +75,7 @@ def test_gazebo_test_launch_spawns_map_without_rviz():
 
 
 def test_gazebo_house_spawns_packaged_furniture_in_world_frame():
-    module = load("nira_bringup", "test_gazebo_launch.py")
+    module = load("nira_gazebo", "test_gazebo_launch.py")
     with patch.object(module, "Node", wraps=module.Node) as node:
         module.generate_launch_description()
     furniture = next(
@@ -98,7 +98,7 @@ def test_gazebo_house_spawns_packaged_furniture_in_world_frame():
 
 @pytest.mark.parametrize("robot", ["nira"])
 def test_bridge_joint_order_covers_mesh_model(robot):
-    module = load("nira_bringup", "test_gazebo_launch.py")
+    module = load("nira_gazebo", "test_gazebo_launch.py")
     ctx = LaunchContext()
     ctx.launch_configurations["robot"] = robot
     with patch.object(

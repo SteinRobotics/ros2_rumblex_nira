@@ -119,7 +119,7 @@ def generate_launch_description():
     )
     display_mesh = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("nira_description"), "/launch/display_mesh.launch.py"]
+            [FindPackageShare("nira_viz"), "/launch/display_mesh.launch.py"]
         ),
         launch_arguments={
             "joint_state_publisher_gui": "false",

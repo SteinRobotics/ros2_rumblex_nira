@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
   <test_depend>ament_cmake_pytest</test_depend>
 
+  <exec_depend>nira_viz</exec_depend>
   <exec_depend>nira_description</exec_depend>
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>

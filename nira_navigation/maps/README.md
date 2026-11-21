@@ -26,17 +26,17 @@ To adjust the geometry, edit the metre-based rectangles in
 python3 nira_navigation/scripts/generate_house_map.py
 ```
 
-`nira_bringup/launch/test_launch.py` loads this map automatically using
+`nira_viz/launch/test_launch.py` loads this map automatically using
 `map_launch.py`, which activates the map server and publishes `/map` in the
 `map` frame using wall time. Both packages already install their launch/map
 directories. After rebuilding and sourcing the workspace:
 
 ```bash
-ros2 launch nira_bringup test_launch.py
+ros2 launch nira_viz test_launch.py
 # Map server alone:
 ros2 launch nira_navigation map_launch.py
 # Override the map:
-ros2 launch nira_bringup test_launch.py map:=/absolute/path/to/map.yaml
+ros2 launch nira_viz test_launch.py map:=/absolute/path/to/map.yaml
 ```
 
 Runtime dependencies are `nav2_map_server` and `nav2_lifecycle_manager`,
@@ -93,7 +93,7 @@ python3 -m unittest discover -s nira_navigation/test -p 'test_*.py'
 Gazebo uses the same house walls and room positions with:
 
 ```bash
-ros2 launch nira_bringup test_gazebo_launch.py
+ros2 launch nira_gazebo test_gazebo_launch.py
 ```
 
 The robot starts at the living-room center (`start_x:=-2.26 start_y:=-2.13`).

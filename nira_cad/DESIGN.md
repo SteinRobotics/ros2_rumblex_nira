@@ -160,8 +160,8 @@ capacity or clearance throughout leg motion.
 After building and sourcing the workspace, display either with:
 
 ```bash
-ros2 launch nira_description display.launch.py
-ros2 launch nira_description display_mesh.launch.py
+ros2 launch nira_viz display.launch.py
+ros2 launch nira_viz display_mesh.launch.py
 ```
 
 The joint and mesh registrations come from the CAD horn interfaces, including
