@@ -23,6 +23,7 @@ find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nira_interfaces REQUIRED)
 find_package(nira_utils REQUIRED)
+find_package(magic_enum CONFIG REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(nlohmann_json REQUIRED) # nlohmann_json -> sudo apt install nlohmann-json3-dev
 
@@ -67,6 +68,7 @@ target_include_directories(nira_brain_lib PUBLIC
 )
 target_link_libraries(nira_brain_lib PUBLIC
   nira_utils::nira_geometry
+  magic_enum::magic_enum
   ${sensor_msgs_TARGETS}
   tf2::tf2
   tf2_ros::tf2_ros
@@ -157,10 +159,7 @@ if(BUILD_TESTING)
   ament_add_gtest(test_velocity test/test_velocity.cpp)
   target_link_libraries(test_velocity nira_brain_lib)
 
-  ament_add_gtest(test_movement_types
-    test/test_movement_types.cpp
-    test/test_movement_types_other_translation_unit.cpp
-  )
+  ament_add_gtest(test_movement_types test/test_movement_types.cpp)
   target_link_libraries(test_movement_types nira_brain_lib)
   ament_add_gtest(test_coordinator test/test_coordinator.cpp)
   target_link_libraries(test_coordinator nira_brain_lib)

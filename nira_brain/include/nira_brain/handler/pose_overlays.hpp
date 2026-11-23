@@ -9,7 +9,7 @@ class PoseOverlays {
    public:
     explicit PoseOverlays(const std::shared_ptr<rclcpp::Node>& node);
     void toggle(bool follow_face, bool level_torso);
-    void apply(nira_interfaces::msg::BodyPose& pose, MovementRequest::_type_type gait,
+    void apply(nira_interfaces::msg::BodyPose& pose, MovementRequest::Type gait,
                nira_geometry::units::Duration dt);
 
    private:

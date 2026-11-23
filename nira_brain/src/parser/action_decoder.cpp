@@ -1,5 +1,8 @@
 #include "action_decoder.hpp"
 
+#include <magic_enum/magic_enum.hpp>
+#include <map>
+
 #include "nira_utils/body_pose.hpp"
 #include "yaml_fields.hpp"
 namespace brain::sequence_detail {
@@ -98,7 +101,7 @@ std::vector<std::shared_ptr<RequestBase>> ActionDecoder::parseActionGroup(const 
         movement->movementRequest.body_pose = parseBodyPose(value);
         movement->movementRequest.interpolation = parseInterpolation(value);
         movement->movementRequest.type = MovementRequest::SINGLE_POSE;
-        movement->movementRequest.name = "SINGLE_POSE";
+        movement->movementRequest.name = magic_enum::enum_name(movement->movementRequest.type);
         const double duration = valueOr(value, "duration_s", kDefaultPoseDuration.numerical_value_in(s));
         if (!std::isfinite(duration) || duration < kMinimumAbsolutePoseDuration.numerical_value_in(s))
             throw std::runtime_error("body_pose duration_s must be finite and at least 0.1 seconds");
@@ -317,10 +320,9 @@ std::shared_ptr<RequestMovementType> ActionDecoder::createRequestMovementType(co
             }
 
             const auto typeStr = value["name"].as<std::string>();
-            const auto type = nameToMovementType.find(typeStr);
-            if (type == nameToMovementType.end())
-                throw std::runtime_error("Unknown movement type: " + typeStr);
-            movementRequest.type = type->second;
+            const auto type = magic_enum::enum_cast<MovementRequest::Type>(typeStr);
+            if (!type) throw std::runtime_error("Unknown movement type: " + typeStr);
+            movementRequest.type = *type;
             movementRequest.name = typeStr;
             if (value["interpolation"] && movementRequest.type != MovementRequest::SINGLE_POSE)
                 throw std::runtime_error("interpolation requires SINGLE_POSE");

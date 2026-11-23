@@ -4,6 +4,8 @@
 
 #include "requester/error_management.hpp"
 
+#include <format>
+
 using namespace nira_interfaces::msg;
 
 namespace brain {
@@ -52,16 +54,14 @@ EError CErrorManagement::getStatusServoTemperature(const ServoStatus& msg) {
     if (temperature > parameters_.servo_temperature.critical_high) {
         RCLCPP_ERROR_STREAM(node_->get_logger(), "Servo temperature of "
                                                      << msg.servo_max_temperature << " is critical: "
-                                                     << to_string_with_precision(msg.max_temperature, 0)
-                                                     << "°C");
+                                                     << std::format("{:.0f}", msg.max_temperature) << "°C");
 
         return EError::TemperatureCriticalHigh;
     }
     if (temperature > parameters_.servo_temperature.high) {
-        RCLCPP_WARN_STREAM(node_->get_logger(),
-                           "Servo temperature of "
-                               << msg.servo_max_temperature
-                               << " is high: " << to_string_with_precision(msg.max_temperature, 0) << "°C");
+        RCLCPP_WARN_STREAM(node_->get_logger(), "Servo temperature of "
+                                                    << msg.servo_max_temperature << " is high: "
+                                                    << std::format("{:.0f}", msg.max_temperature) << "°C");
         return EError::TemperatureHigh;
     }
     return EError::None;

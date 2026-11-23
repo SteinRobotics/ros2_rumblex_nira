@@ -67,7 +67,8 @@ TEST_F(FaceMovementTest, PublishesCoordinatedPoseWithPlantedFeetAndReturnsOnLoss
     EXPECT_FALSE(sequence_ended);
 }
 
-class WalkingFaceTest : public MovementHandlerTest, public ::testing::WithParamInterface<uint8_t> {
+class WalkingFaceTest : public MovementHandlerTest,
+                        public ::testing::WithParamInterface<MovementRequest::Type> {
     void configurePreview(std::vector<rclcpp::Parameter>& params) override {
         params.emplace_back("gait.crawl.head_max_yaw_deg", 8.0);
     }

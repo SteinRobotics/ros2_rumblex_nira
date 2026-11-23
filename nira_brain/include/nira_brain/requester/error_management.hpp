@@ -7,7 +7,6 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/utility.hpp"
 #include "nira_interfaces/msg/servo_status.hpp"
 #include "nira_utils/filters.hpp"
 #include "nira_utils/units.hpp"

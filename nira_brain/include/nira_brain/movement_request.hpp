@@ -64,8 +64,7 @@ struct MovementRequest {
         MOVE_CRAWL = 37,
     };
     enum Direction : uint8_t { CLOCKWISE = 0, ANTICLOCKWISE = 1 };
-    using _type_type = uint8_t;
-    uint8_t type = NO_REQUEST;
+    Type type = NO_REQUEST;
     uint8_t direction = CLOCKWISE;
     units::Duration duration_s = kDefaultPoseDuration;
     std::string name;

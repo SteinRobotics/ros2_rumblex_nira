@@ -42,7 +42,7 @@ class CGaitController {
     CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<CPoseModel> kinematics);
     virtual ~CGaitController();
 
-    using MovementRequestType = brain::MovementRequest::_type_type;
+    using MovementRequestType = brain::MovementRequest::Type;
 
     std::function<void(const MovementRequest&)> on_gait_changed;
     bool takeSequenceAbort() {
@@ -82,7 +82,7 @@ class CGaitController {
    private:
     void switchGait(brain::MovementRequest request);
     void configureGait(const MovementRequest& request);
-    static brain::MovementRequest createMsg(std::string name, MovementRequestType type);
+    static brain::MovementRequest createMsg(MovementRequestType type);
 
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CPoseModel> kinematics_;

@@ -9,6 +9,7 @@
 #include <cmath>
 #include <format>
 #include <fstream>
+#include <magic_enum/magic_enum.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -122,10 +123,9 @@ void CCoordinator::sequenceRequested(const std::string& name) {
 void CCoordinator::cycleGaitMode() {
     last_sticks_ = {};  // Apply a held stick to the newly selected mode on the next sample.
     activeGaitIndex_ = (activeGaitIndex_ + 1) % gaitModes_.size();
-    auto gaitName = movementTypeToName.at(gaitModes_[activeGaitIndex_]);
-    RCLCPP_INFO(node_->get_logger(), "Gait mode switched to: %s", gaitName.c_str());
     auto request = std::make_shared<RequestTalking>();
-    request->text = gaitName;
+    request->text = magic_enum::enum_name(gaitModes_[activeGaitIndex_]);
+    RCLCPP_INFO(node_->get_logger(), "Gait mode switched to: %s", request->text.c_str());
     std::replace(request->text.begin(), request->text.end(), '_', ' ');
     submitRequest(request, Prio::High);
 }
@@ -233,7 +233,7 @@ CCoordinator::MovementCommand CCoordinator::movementFromJoystick(const JoystickR
     nira_interfaces::msg::BodyPose pose;
     pose.has_torso_pose = pose.has_head_orientation = true;
     pose.torso_pose = body.toMsg();
-    return {.type = active ? gaitModes_[activeGaitIndex_] : uint32_t{MovementRequest::NO_REQUEST},
+    return {.type = active ? gaitModes_[activeGaitIndex_] : MovementRequest::NO_REQUEST,
             .body_pose = pose,
             .velocity = velocity.toMsg()};
 }
@@ -453,7 +453,7 @@ void CCoordinator::submitRequestMove(const MovementCommand& command) {
     if (command.direction.has_value()) {
         request.direction = command.direction.value();
     }
-    request.name = movementTypeToName.at(request.type);
+    request.name = magic_enum::enum_name(request.type);
     request.body_pose = command.body_pose;
     auto moveRequest = std::make_shared<RequestMovementType>();
     moveRequest->movementRequest = request;

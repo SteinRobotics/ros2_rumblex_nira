@@ -30,9 +30,9 @@ class CIdleGait final : public IGait {
 };
 }  // namespace
 
-brain::MovementRequest CGaitController::createMsg(std::string name, MovementRequestType type) {
+brain::MovementRequest CGaitController::createMsg(MovementRequestType type) {
     brain::MovementRequest msg;
-    msg.name = name;
+    msg.name = magic_enum::enum_name(type);
     msg.type = type;
     return msg;
 }
@@ -76,8 +76,8 @@ CGaitController::CGaitController(std::shared_ptr<rclcpp::Node> node, std::shared
 
     // Default active gait (robot starts with no request)
     active_gait_ = gaits_[MovementRequest::NO_REQUEST];
-    active_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
-    pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
+    active_request_ = createMsg(MovementRequest::NO_REQUEST);
+    pending_request_ = createMsg(MovementRequest::NO_REQUEST);
 }
 
 CGaitController::~CGaitController() = default;
@@ -103,7 +103,7 @@ bool CGaitController::setGait(brain::MovementRequest request) {
         RCLCPP_WARN(node_->get_logger(), "Invalid sensor gait parameters");
         return false;
     }
-    pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
+    pending_request_ = createMsg(MovementRequest::NO_REQUEST);
 
     // If there's an active gait and the same gait is requested again, handle
     // transient states (Stopped -> start, StopPending/Stopping -> cancelStop) and return.
@@ -147,7 +147,7 @@ void CGaitController::switchGait(brain::MovementRequest request) {
     stop_requested_ = false;
     RCLCPP_INFO_STREAM(node_->get_logger(),
                        "CGaitController: switching to " << request.name << " (type=" << +request.type << ")");
-    pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
+    pending_request_ = createMsg(MovementRequest::NO_REQUEST);
     active_request_ = request;
 
     active_gait_ = gaits_[request.type];
@@ -197,7 +197,7 @@ bool CGaitController::finishesAutomatically() const {
 }
 
 void CGaitController::requestStopSelectedGait() {
-    pending_request_ = createMsg("NO_REQUEST", MovementRequest::NO_REQUEST);
+    pending_request_ = createMsg(MovementRequest::NO_REQUEST);
     active_gait_->requestStop();
     stop_requested_ = !motionStopped();
 }

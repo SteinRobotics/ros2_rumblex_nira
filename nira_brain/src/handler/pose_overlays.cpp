@@ -22,8 +22,7 @@ void PoseOverlays::toggle(bool follow_face, bool level_torso) {
     if (level_torso) level_torso_ = !level_torso_;
 }
 
-void PoseOverlays::apply(nira_interfaces::msg::BodyPose& pose, MovementRequest::_type_type gait,
-                         Duration dt) {
+void PoseOverlays::apply(nira_interfaces::msg::BodyPose& pose, MovementRequest::Type gait, Duration dt) {
     const bool walking = isLocomotion(gait);
     const bool eligible = walking || gait == MovementRequest::SEQUENCE_STAND_UP;
     follower_.setEnabled(eligible && follow_face_);

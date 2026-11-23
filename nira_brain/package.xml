@@ -25,6 +25,7 @@
   <depend>nlohmann-json-dev</depend>
   <depend>yaml-cpp</depend>
   <depend>nira_utils</depend>
+  <depend>magic_enum</depend>
 
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>python3-tk</exec_depend>

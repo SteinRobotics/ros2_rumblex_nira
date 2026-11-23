@@ -42,13 +42,13 @@ class ActionPlannerTestAccess {
 
 class CoordinatorTestAccess {
    public:
-    static void submit(CCoordinator& coordinator, uint32_t type, double seconds) {
+    static void submit(CCoordinator& coordinator, MovementRequest::Type type, double seconds) {
         coordinator.submitRequestMove({.type = type, .duration = seconds * s});
     }
     static bool locked(const CCoordinator& coordinator) {
         return coordinator.movement_deadline_.has_value();
     }
-    static uint32_t actualType(const CCoordinator& coordinator) {
+    static MovementRequest::Type actualType(const CCoordinator& coordinator) {
         return coordinator.actualMovementType_;
     }
     static void expire(CCoordinator& coordinator) {
@@ -81,7 +81,7 @@ class CoordinatorTest : public ::testing::Test {
         planner_ = std::make_shared<CActionPlanner>(node_);
         coordinator_ = std::make_unique<CCoordinator>(node_, planner_);
     }
-    void feedback(uint8_t type) {
+    void feedback(MovementRequest::Type type) {
         MovementRequest request;
         request.type = type;
         coordinator_->movementTypeActualReceived(request);
@@ -302,6 +302,7 @@ TEST_F(CoordinatorTest, VoiceRunningUsesRequestedDirectionAndStops) {
         ASSERT_TRUE(gait);
         ASSERT_TRUE(velocity);
         EXPECT_EQ(gait->movementRequest.type, MovementRequest::MOVE_TRIPOD);
+        EXPECT_EQ(gait->movementRequest.name, "MOVE_TRIPOD");
         EXPECT_DOUBLE_EQ(velocity->velocity.linear.x, x);
         EXPECT_DOUBLE_EQ(velocity->velocity.linear.y, y);
     }

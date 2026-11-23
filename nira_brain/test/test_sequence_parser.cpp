@@ -659,7 +659,7 @@ TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
     ASSERT_TRUE(parser_.parseDirectory(NIRA_SEQUENCES_DIRECTORY));
     struct Preset {
         const char* name;
-        uint8_t gait;
+        MovementRequest::Type gait;
         double seconds;
     };
     for (const auto& preset : {Preset{"hold_distance", MovementRequest::HOLD_DISTANCE, 10.0},
@@ -689,6 +689,7 @@ TEST_F(SequenceParserTest, CatalogPresetsPrepareStandupAndFinishStationary) {
             EXPECT_FALSE(movement->movementRequest.distance_m);
         }
         if (preset.gait == MovementRequest::MOVE_TRIPOD) {
+            EXPECT_EQ(movement->movementRequest.name, "MOVE_TRIPOD");
             EXPECT_EQ(sequence->get().actionGroups[1].size(), 2u);
             const auto velocity = request<RequestVelocity>(preset.name, 1, 1);
             ASSERT_TRUE(velocity);
@@ -990,7 +991,7 @@ TEST_F(SequenceParserTest, RejectsMalformedPoseAndConflictingActions) {
           "body_pose: {head_orientation: {}, head_orientation: {yaw: 3}}",
           "body_pose: {head_orientation: {}}, movement: {name: SINGLE_POSE}",
           "body_pose: {head_orientation: {}}, RequestHeadOrientation: {yaw: 4}", "say: one, say: two",
-          "movement: {name: UNKNOWN}", "movement: {name: SINGLE_POSE}"}) {
+          "movement: {name: move_tripod}", "movement: {name: UNKNOWN}", "movement: {name: SINGLE_POSE}"}) {
         EXPECT_FALSE(parser_.parseString(std::string("name: invalid\nactions: [{") + action + "}]"))
             << action;
     }

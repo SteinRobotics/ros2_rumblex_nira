@@ -37,7 +37,7 @@ class SensorGaitsTest : public ::testing::Test {
         node.reset();
         rclcpp::shutdown();
     }
-    void select(uint8_t type, double duration, double distance = 0.6) {
+    void select(MovementRequest::Type type, double duration, double distance = 0.6) {
         MovementRequest request;
         request.type = type;
         request.duration_s = duration * s;

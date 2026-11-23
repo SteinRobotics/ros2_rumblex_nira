@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "requester/utility.hpp"
 #include "nira_brain/requester/irequester.hpp"
 #include "nira_interfaces/msg/joystick_request.hpp"
 

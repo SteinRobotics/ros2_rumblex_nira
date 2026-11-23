@@ -1,5 +1,7 @@
 #include "handler/movement.hpp"
 
+#include <magic_enum/magic_enum.hpp>
+
 namespace brain {
 
 using namespace mp_units;
@@ -27,7 +29,7 @@ CMovement::CMovement(std::shared_ptr<rclcpp::Node> node)
         if (on_gait_changed) on_gait_changed(request);
     };
     std_msgs::msg::String name;
-    name.data = "NO_REQUEST";
+    name.data = magic_enum::enum_name(MovementRequest::NO_REQUEST);
     pub_movement_name_->publish(name);
     setRequestFinished(true);
 }

@@ -24,7 +24,6 @@
 #include "parser/sequence_parser.hpp"
 #include "requester/error_management.hpp"
 #include "requester/text_interpreter.hpp"
-#include "requester/utility.hpp"
 
 namespace brain {
 
@@ -56,7 +55,7 @@ class CCoordinator {
     void submitRequest(std::shared_ptr<RequestBase> request, Prio prio);
 
     struct MovementCommand {
-        uint32_t type = MovementRequest::NO_REQUEST;
+        MovementRequest::Type type = MovementRequest::NO_REQUEST;
         units::Duration duration = 0.0 * s;
         std::string comment{};
         Prio priority = Prio::Normal;
@@ -96,16 +95,16 @@ class CCoordinator {
     std::shared_ptr<utils::CSimpleTimer> timerNoRequest_;
     struct MovementDeadline {
         std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<double>> time;
-        uint32_t movement_type;
+        MovementRequest::Type movement_type;
     };
     std::optional<MovementDeadline> movement_deadline_;
 
-    uint32_t actualMovementType_ = brain::MovementRequest::NO_REQUEST;
+    MovementRequest::Type actualMovementType_ = brain::MovementRequest::NO_REQUEST;
     bool isStanding_ = false;
     bool isServoRelayOn_ = true;
 
     // Gait cycling: button_start iterates through these modes
-    const std::vector<uint32_t> gaitModes_ = {
+    static constexpr std::array gaitModes_ = {
         brain::MovementRequest::MOVE_COMBINED, brain::MovementRequest::CONTINUOUS_POSE,
         brain::MovementRequest::MOVE_TRIPOD,   brain::MovementRequest::MOVE_RIPPLE,
         brain::MovementRequest::MOVE_WAVE,     brain::MovementRequest::MOVE_CRAWL,

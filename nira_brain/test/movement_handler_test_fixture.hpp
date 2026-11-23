@@ -87,7 +87,7 @@ class MovementHandlerTest : public ::testing::Test {
             0.0 * deg, -node->get_parameter("gait.generic.head_max_pitch_deg").as_double() * deg, 0.0 * deg));
         return bodyPose(model);
     }
-    void request(uint8_t type, double duration = 1.0) {
+    void request(MovementRequest::Type type, double duration = 1.0) {
         auto r = std::make_shared<RequestMovementType>();
         r->movementRequest.type = type;
         r->movementRequest.duration_s = duration * s;
