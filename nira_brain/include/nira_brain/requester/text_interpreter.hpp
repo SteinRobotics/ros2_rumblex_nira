@@ -4,35 +4,38 @@
 
 #pragma once
 
-#include <algorithm>
-#include <map>
-#include <ranges>
+#include <istream>
 #include <string>
-#include <unordered_map>
-//
-#include "rclcpp/rclcpp.hpp"
-//
-#include "requester/interpretation.hpp"
-#include "requester/word.hpp"
+#include <string_view>
+#include <vector>
 
 namespace brain {
 
+enum class InterpretationStatus { NoMatch, Matched, Negated, Ambiguous };
+
+struct VoiceInterpretation {
+    InterpretationStatus status = InterpretationStatus::NoMatch;
+    std::string command{};
+    int forward = 0;  // +1 forward, -1 backward
+    int left = 0;     // +1 left, -1 right
+    bool operator==(const VoiceInterpretation&) const = default;
+};
+
 class CTextInterpreter {
    public:
-    CTextInterpreter(std::shared_ptr<rclcpp::Node> node);
-    virtual ~CTextInterpreter() = default;
-
-    std::vector<CWord> parseText(std::string& text);
-    std::string searchInterpretation(const std::vector<CWord>& identifiedWords);
-    bool lettersIdentified(const std::string& letters, const std::vector<CWord>& words);
+    explicit CTextInterpreter(std::istream& configuration);
+    VoiceInterpretation interpret(std::string_view text) const;
 
    private:
-    CWord letters2Word(const std::string& letters);
-    bool isWordIn(const CWord& word, const std::vector<CWord>& words);
-    void readInterpretation();
-    std::shared_ptr<rclcpp::Node> node_;
-    std::unordered_map<std::string, CWord> vocabulary_;
-    std::unordered_map<std::string, CInterpretation> interpretations_;
+    using Tokens = std::vector<std::string>;
+    using Aliases = std::vector<Tokens>;
+    struct Rule {
+        std::string command;
+        std::vector<Aliases> required;
+        Aliases exact;
+        bool directional = false;
+    };
+    std::vector<Rule> rules_;
 };
 
 }  // namespace brain

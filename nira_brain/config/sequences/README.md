@@ -302,11 +302,10 @@ character; the final pose has neutral head/torso and the original toe positions.
 The final action explicitly stops music. See the [authoring guide](../../tools/README.md)
 for regeneration, contact reports, timing limitations, and cancellation behavior.
 
-## Bite and stomp examples
+## Bite and stomp
 
-`bite.yaml` and `stomp.yaml` are selectable suggested gestures with no voice or
-joystick triggers. Start from a standing pose; they do not automatically stand up.
-The existing `commandBite` and `commandStomp` voice commands remain unconnected.
+From a standing pose, say `beiß` or `beiße` to run `bite`, and `stampf` or
+`stampfe` to run `stomp`. Both sequences are also selectable by name.
 
 `bite` is a head-led snap with all six toes planted: 0.22 s gathering back/down,
 0.12 s head lead, 0.18 s forward strike, 0.28 s recoil, and 0.35 s settling.
@@ -317,10 +316,8 @@ before the final one-second saved-pose restoration. Expressive motion takes
 1.15 s; total duration is 2.15 s plus scheduler handoffs. Relative saving captures
 the entrance pose during the short gathering phase.
 This sharper version has not been visually or physically validated on hardware.
-`stomp` saves the starting pose while lifting the right-front toe 20 mm, lowers
-it by 20 mm, lifts the left-front toe 20 mm, then restores the saved pose.
-Each stomp action takes one second. These use relative targets rather than
-robot-specific stance coordinates and are suggestions, not hardware-validated motions.
+`stomp` says “Nein” and lifts the right-front toe, lowers it, then restores the
+saved starting pose. This sequence also awaits hardware validation.
 
 Normal completion restores the full starting pose. Cancellation finishes the
 active action and discards remaining actions, including restoration. As with

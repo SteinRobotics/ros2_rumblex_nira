@@ -23,6 +23,8 @@ class SpeechToTextOnline(Thread):
 
     def run(self):
         r = sr.Recognizer()
+        # A single syllable such as "stop" or "stampf" can be shorter than 300 ms.
+        r.phrase_threshold = 0.15
         recog = "das habe ich nicht verstanden"
 
         try:
@@ -40,7 +42,12 @@ class SpeechToTextOnline(Thread):
             return
 
         try:
-            recog = r.recognize_google_cloud(audio, language_code='de-DE')
+            recog = r.recognize_google_cloud(
+                audio, language_code='de-DE', alternative_language_codes=['en-US'],
+                model='command_and_search',
+                # Short commands have little context for distinguishing similar sounds.
+                preferred_phrases=['stomp', 'stampf', 'bite', 'beiß', 'stop', 'stopp'],
+            )
             self.logger.info("speech_recognition_online: " + recog)
         except sr.UnknownValueError as u:
             self.logger.warning(str(u))

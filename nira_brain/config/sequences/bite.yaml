@@ -1,7 +1,8 @@
 # A head-led snap: gather, aim, strike, recoil, and settle. Start standing.
 # All six toes stay planted. Offsets below are incremental, not absolute targets.
 name: bite
-# No automatic voice or joystick trigger.
+trigger:
+  voice: commandBite
 variables:
   kGatherDuration: &kGatherDuration 0.22  # s
   kLeadDuration: &kLeadDuration 0.12  # s

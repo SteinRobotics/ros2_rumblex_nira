@@ -7,6 +7,8 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "std_srvs/srv/empty.hpp"
+#include "std_srvs/srv/set_bool.hpp"
 //
 #include "movement_request.hpp"
 #include "nira_interfaces/msg/joystick_request.hpp"
@@ -40,7 +42,8 @@ class CCoordinator {
     void joystickRequestReceived(const nira_interfaces::msg::JoystickRequest& msg);
     void sequenceRequested(const std::string& name);
     void cmdVelReceived(const geometry_msgs::msg::Twist& msg);
-    void speechRecognized(std::string text);
+    enum class VoiceDispatch { Ignored, Submitted, Unavailable, Unsupported };
+    VoiceDispatch speechRecognized(std::string_view text);
     void supplyVoltageReceived(float voltage);
     void servoStatusReceived(const nira_interfaces::msg::ServoStatus& msg);
     void movementTypeActualReceived(const brain::MovementRequest& msg);
@@ -85,7 +88,9 @@ class CCoordinator {
     std::shared_ptr<rclcpp::Node> node_;
     std::shared_ptr<CActionPlanner> actionPlanner_;
     std::shared_ptr<CErrorManagement> errorManagement_;
-    std::shared_ptr<CTextInterpreter> textInterpreter_;
+    std::optional<CTextInterpreter> textInterpreter_;
+    rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cameraCapture_;
+    rclcpp::Client<std_srvs::srv::Empty>::SharedPtr lidarStart_, lidarStop_;
     std::shared_ptr<CSequenceParser> sequenceParser_;
     std::shared_ptr<utils::CSimpleTimer> timerErrorRequest_;
     std::shared_ptr<utils::CSimpleTimer> timerNoRequest_;

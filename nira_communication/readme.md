@@ -74,6 +74,11 @@ uses a network timeout; if unavailable, `espeak-ng` creates a WAV file which use
 same playback/completion path. Install the `espeak-ng` executable for this fallback.
 Existing package-local TTS caches are no longer used and may be removed manually.
 
+After the wake-word acknowledgement, speak one command in German or English.
+Both languages are available on every recording with the usual launch settings.
+For example, say `steh auf` or `stand up`, `stampf` or `stomp`, and
+`dreh nach links` or `turn left`. Nira gives its spoken acknowledgements in German.
+
 Google speech recognition respects an existing `GOOGLE_APPLICATION_CREDENTIALS`
 setting. The legacy package-local `keys/SERVICE_ACCOUNT_KEY.JSON` is used only when
 present and no credential environment setting exists.

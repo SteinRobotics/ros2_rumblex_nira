@@ -1,138 +1,342 @@
 {
     "commandLookLeft": {
-        "doing": [ "sieh", "sehe", "schau", "schaue" ],
-        "preposition": [ "nach" ],
-        "direction": [ "links" ]
+        "de": {
+            "doing": [ "sieh", "sehe", "schau", "schaue" ],
+            "direction": [ "links" ]
+        },
+        "en": {
+            "doing": [ "look" ],
+            "direction": [ "left" ]
+        }
     },
     "commandLookRight": {
-        "doing": [ "sieh", "sehe", "schau", "schaue" ],
-        "preposition": [ "nach" ],
-        "direction": [ "rechts" ]
+        "de": {
+            "doing": [ "sieh", "sehe", "schau", "schaue" ],
+            "direction": [ "rechts" ]
+        },
+        "en": {
+            "doing": [ "look" ],
+            "direction": [ "right" ]
+        }
     },
     "commandWatch": {
-        "doing": [ "sieh", "schau", "schaue", "sehe", "seh" ],
-        "pronoun": [ "dich" ],
-        "preposition": [ "um" ]
+        "de": {
+            "doing": [ "sieh", "schau", "schaue", "sehe", "seh" ],
+            "pronoun": [ "dich" ],
+            "preposition": [ "um" ]
+        },
+        "en": {
+            "doing": [ "look around" ]
+        }
     },
     "commandDanceHotDogsForBreakfast": {
-        "doing": [ "tanz", "tanze" ],
-        "noun": [ "hot", "dogs", "breakfast" ]
+        "de": {
+            "doing": [ "tanz", "tanze" ],
+            "noun": [ "hot dogs for breakfast", "hot dogs" ]
+        },
+        "en": {
+            "doing": [ "dance" ],
+            "noun": [ "hot dogs for breakfast", "hot dogs" ]
+        }
     },
     "commandDanceExcessParty": {
-        "doing": [ "tanz", "tanze" ],
-        "noun": [ "excess", "party", "partie" ]
+        "de": {
+            "doing": [ "tanz", "tanze" ],
+            "noun": [ "excess party", "excess partie" ]
+        },
+        "en": {
+            "doing": [ "dance" ],
+            "noun": [ "excess party" ]
+        }
     },
     "commandDanceDancingStreet": {
-        "doing": [ "tanz", "tanze" ],
-        "noun": [ "dancing", "street", "straße", "strasse" ]
+        "de": {
+            "doing": [ "tanz", "tanze" ],
+            "noun": [ "dancing street" ]
+        },
+        "en": {
+            "doing": [ "dance" ],
+            "noun": [ "dancing street" ]
+        }
     },
     "commandDance": {
-        "doing": [ "tanz", "tanze" ],
-        "noun": [ "standard", "standardtanz" ]
+        "de": {
+            "doing": [ "tanz", "tanze" ],
+            "noun": [ "standard", "standardtanz" ]
+        },
+        "en": {
+            "doing": [ "dance" ],
+            "noun": [ "standard", "default" ],
+            "exact": [ "dance" ]
+        }
     },
     "commandRun": {
-        "doing": [ "renn", "renne", "flitz", "flitze" ],
-        "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
+        "de": {
+            "doing": [ "renn", "renne", "flitz", "flitze" ],
+            "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
+        },
+        "en": {
+            "doing": [ "run" ],
+            "direction": [ "forward", "forwards", "back", "backward", "backwards", "left", "right" ]
+        }
     },
     "commandMove": {
-        "doing": [ "fahr", "fahre", "beweg", "bewege", "lauf", "laufe", "dreh", "drehe", "geh", "gehe" ],
-        "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
+        "de": {
+            "doing": [ "fahr", "fahre", "beweg", "bewege", "lauf", "laufe", "geh", "gehe" ],
+            "direction": [ "vorn", "vorne", "hinten", "links", "rechts" ]
+        },
+        "en": {
+            "doing": [ "walk", "move", "go" ],
+            "direction": [ "forward", "forwards", "back", "backward", "backwards", "left", "right" ]
+        }
+    },
+    "commandTurn": {
+        "de": {
+            "doing": [ "dreh", "drehe" ],
+            "direction": [ "links", "rechts" ]
+        },
+        "en": {
+            "doing": [ "turn", "rotate" ],
+            "direction": [ "left", "right" ]
+        }
     },
     "commandWalkDemo": {
-        "doing": [ "test", "teste" ],
-        "noun": [ "gang" ]
+        "de": {
+            "doing": [ "test", "teste" ],
+            "noun": [ "gang" ]
+        },
+        "en": {
+            "doing": [ "test", "demo" ],
+            "noun": [ "gait", "walking" ]
+        }
     },
     "commandStopMove": {
-        "doing": [ "halt", "halte", "stop", "stopp", "stoppe" ],
-        "noun": [ "bewegung" ]
+        "de": {
+            "exact": [ "stopp" ],
+            "doing": [ "halt", "halte", "stop", "stopp", "stoppe" ],
+            "noun": [ "bewegung" ]
+        },
+        "en": {
+            "exact": [ "stop", "please stop", "stop please" ],
+            "doing": [ "stop" ],
+            "noun": [ "moving", "walking", "running", "movement" ]
+        }
     },
     "commandStandup": {
-        "doing": [ "steh", "stehe" ],
-        "preposition": [ "auf" ]
+        "de": {
+            "doing": [ "steh", "stehe" ],
+            "preposition": [ "auf" ]
+        },
+        "en": {
+            "doing": [ "stand up" ]
+        }
     },
     "commandLaydown": {
-        "doing": [ "leg", "lege", "setz" ],
-        "pronoun": [ "dich" ],
-        "preposition": [ "hin" ]
+        "de": {
+            "doing": [ "leg", "lege", "setz" ],
+            "pronoun": [ "dich" ],
+            "preposition": [ "hin" ]
+        },
+        "en": {
+            "doing": [ "lie down", "lay down" ]
+        }
     },
     "commandHighFive": {
-        "doing": [ "gib" ],
-        "pronoun": [ "mir" ],
-        "noun": [ "five" ]
+        "de": {
+            "doing": [ "gib" ],
+            "pronoun": [ "mir" ],
+            "noun": [ "five" ]
+        },
+        "en": {
+            "doing": [ "high five" ]
+        }
     },
     "commandBodyRoll": {
-        "doing": [ "roll", "rolle" ],
-        "noun": [ "rumpf" ]
+        "de": {
+            "doing": [ "roll", "rolle" ],
+            "noun": [ "rumpf" ]
+        },
+        "en": {
+            "doing": [ "roll" ],
+            "noun": [ "body", "torso" ]
+        }
     },
     "commandLegWave": {
-        "doing": [ "bein", "beine" ],
-        "noun": [ "welle" ]
+        "de": {
+            "doing": [ "bein", "beine" ],
+            "noun": [ "welle" ]
+        },
+        "en": {
+            "doing": [ "wave" ],
+            "noun": [ "leg", "legs" ]
+        }
     },
     "commandBite": {
-        "doing": [ "beiß", "beiße", "beiss", "beisse" ]
+        "de": {
+            "doing": [ "beiß", "beiße", "beiss", "beisse" ]
+        },
+        "en": {
+            "doing": [ "bite" ]
+        }
     },
     "commandStomp": {
-        "doing": [ "stampf", "stampfe" ]
+        "de": {
+            "doing": [ "stampf", "stampfe" ]
+        },
+        "en": {
+            "doing": [ "stomp" ]
+        }
     },
     "commandClap": {
-        "doing": [ "klatsch", "klatsche" ]
+        "de": {
+            "doing": [ "klatsch", "klatsche" ]
+        },
+        "en": {
+            "doing": [ "clap" ]
+        }
     },
     "commandCalibrate": {
-        "doing": [ "kalibrier", "kalibriere" ]
+        "de": {
+            "doing": [ "kalibrier", "kalibriere" ]
+        },
+        "en": {
+            "doing": [ "calibrate" ]
+        }
     },
     "commandNeutral": {
-        "doing": [ "geh", "gehe" ],
-        "noun": [ "neutral", "neutralposition", "grundstellung", "ausgangsposition" ]
+        "de": {
+            "doing": [ "geh", "gehe" ],
+            "noun": [ "neutral", "neutralposition", "grundstellung", "ausgangsposition" ]
+        },
+        "en": {
+            "doing": [ "return", "go", "move" ],
+            "noun": [ "neutral", "starting position" ]
+        }
     },
     "commandTestBody": {
-        "doing": [ "test", "teste" ],
-        "bodyPart": [ "body", "rumpf" ]
+        "de": {
+            "doing": [ "test", "teste" ],
+            "bodyPart": [ "body", "rumpf" ]
+        },
+        "en": {
+            "doing": [ "test" ],
+            "bodyPart": [ "body", "torso" ]
+        }
     },
     "commandTestLegs": {
-        "doing": [ "test", "teste" ],
-        "bodyPart": [ "bein", "beine" ]
+        "de": {
+            "doing": [ "test", "teste" ],
+            "bodyPart": [ "bein", "beine" ]
+        },
+        "en": {
+            "doing": [ "test" ],
+            "bodyPart": [ "leg", "legs" ]
+        }
     },
     "tellMeSupplyVoltage": {
-        "doing": [ "sag", "ist" ],
-        "noun": [ "batterie", "spannung" ],
-        "bodyPart": [ "versorgung" ]
+        "de": {
+            "doing": [ "sag", "ist" ],
+            "noun": [ "batterie", "spannung" ],
+            "bodyPart": [ "versorgung" ]
+        },
+        "en": {
+            "doing": [ "tell", "what", "read", "report" ],
+            "noun": [ "voltage" ],
+            "bodyPart": [ "supply", "battery" ]
+        }
     },
     "tellMeServoVoltage": {
-        "doing": [ "sag", "ist" ],
-        "noun": [ "batterie", "spannung" ],
-        "bodyPart": [ "servo" ]
+        "de": {
+            "doing": [ "sag", "ist" ],
+            "noun": [ "batterie", "spannung" ],
+            "bodyPart": [ "servo" ]
+        },
+        "en": {
+            "doing": [ "tell", "what", "read", "report" ],
+            "noun": [ "voltage" ],
+            "bodyPart": [ "servo", "servos" ]
+        }
     },
     "tellMeServoTemperature": {
-        "doing": [ "sag", "ist" ],
-        "noun": [ "temperatur", "warm" ],
-        "bodyPart": [ "servo" ]
+        "de": {
+            "doing": [ "sag", "ist" ],
+            "noun": [ "temperatur", "warm" ],
+            "bodyPart": [ "servo" ]
+        },
+        "en": {
+            "doing": [ "tell", "what", "read", "report", "how" ],
+            "noun": [ "temperature", "warm", "hot" ],
+            "bodyPart": [ "servo", "servos" ]
+        }
     },
     "musicOn": {
-        "doing": [ "spiel", "spiele", "sing", "singe" ],
-        "noun": [ "musik", "lied" ]
+        "de": {
+            "doing": [ "spiel", "spiele", "sing", "singe" ],
+            "noun": [ "musik", "lied" ]
+        },
+        "en": {
+            "doing": [ "play", "start" ],
+            "noun": [ "music", "song" ]
+        }
     },
     "musicOff": {
-        "doing": [ "stop", "stoppe", "halt" ],
-        "noun": [ "musik", "lied" ]
+        "de": {
+            "doing": [ "stop", "stopp", "stoppe", "halt" ],
+            "noun": [ "musik", "lied" ]
+        },
+        "en": {
+            "doing": [ "stop" ],
+            "noun": [ "music", "song" ]
+        }
     },
     "talk": {
-        "doing": [ "sag", "sage", "sprich" ],
-        "noun": [ "wort" ]
+        "de": {
+            "doing": [ "sag", "sage", "sprich" ],
+            "noun": [ "wort" ]
+        },
+        "en": {
+            "doing": [ "say", "speak" ],
+            "noun": [ "word" ]
+        }
     },
     "commandLidarOn": {
-        "doing": [ "aktivier", "aktiviere" ],
-        "noun": [ "lidar", "laserscanner" ]
+        "de": {
+            "doing": [ "aktivier", "aktiviere" ],
+            "noun": [ "lidar", "laserscanner" ]
+        },
+        "en": {
+            "doing": [ "enable", "activate", "turn on", "switch on" ],
+            "noun": [ "lidar" ]
+        }
     },
     "commandLidarOff": {
-        "doing": [ "deaktivier", "deaktiviere" ],
-        "noun": [ "lidar", "laserscanner" ]
+        "de": {
+            "doing": [ "deaktivier", "deaktiviere" ],
+            "noun": [ "lidar", "laserscanner" ]
+        },
+        "en": {
+            "doing": [ "disable", "deactivate", "turn off", "switch off" ],
+            "noun": [ "lidar" ]
+        }
     },
     "commandCameraOn": {
-        "doing": [ "aktivier", "aktiviere" ],
-        "noun": [ "kamera", "camera" ]
+        "de": {
+            "doing": [ "aktivier", "aktiviere" ],
+            "noun": [ "kamera", "camera" ]
+        },
+        "en": {
+            "doing": [ "enable", "activate", "turn on", "switch on" ],
+            "noun": [ "camera" ]
+        }
     },
     "commandCameraOff": {
-        "doing": [ "deaktivier", "deaktiviere" ],
-        "noun": [ "kamera", "camera" ]
+        "de": {
+            "doing": [ "deaktivier", "deaktiviere" ],
+            "noun": [ "kamera", "camera" ]
+        },
+        "en": {
+            "doing": [ "disable", "deactivate", "turn off", "switch off" ],
+            "noun": [ "camera" ]
+        }
     }
 }

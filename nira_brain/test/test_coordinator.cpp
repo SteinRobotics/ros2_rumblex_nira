@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <ament_index_cpp/get_package_share_path.hpp>
+#include <fstream>
 #include <limits>
+#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <thread>
 #include <tuple>
@@ -72,6 +75,8 @@ class CoordinatorTest : public ::testing::Test {
         parameters.insert(parameters.end(), robot.begin(), robot.end());
         rclcpp::NodeOptions options;
         options.parameter_overrides(parameters);
+        options.arguments({"--ros-args", "-r", "camera/set_capture:=~/capture", "-r",
+                           "start_scan:=~/start_scan", "-r", "stop_scan:=~/stop_scan"});
         node_ = std::make_shared<rclcpp::Node>("coordinator_test", options);
         planner_ = std::make_shared<CActionPlanner>(node_);
         coordinator_ = std::make_unique<CCoordinator>(node_, planner_);
@@ -302,9 +307,121 @@ TEST_F(CoordinatorTest, VoiceRunningUsesRequestedDirectionAndStops) {
     }
     coordinator_->speechRecognized("stoppe bewegung");
     const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
-    const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
+    const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.front());
     ASSERT_TRUE(velocity);
     EXPECT_EQ(velocity->velocity, geometry_msgs::msg::Twist());
+}
+
+TEST_F(CoordinatorTest, VoiceStopAtRestAndRejectedCommandsDoNotStartMotion) {
+    create();
+    const auto normal = ActionPlannerTestAccess::normalCount(*planner_);
+    const auto high = ActionPlannerTestAccess::highCount(*planner_);
+    for (auto phrase :
+         {"steh nicht auf", "renn nach links oder rechts", "schau nach links und rechts",
+          "spiel KEINE Musik!", "tanz auf der Straße", "don’t stand up", "turn left or right"}) {
+        EXPECT_EQ(coordinator_->speechRecognized(phrase), CCoordinator::VoiceDispatch::Ignored) << phrase;
+    }
+    EXPECT_EQ(ActionPlannerTestAccess::normalCount(*planner_), normal);
+    EXPECT_EQ(coordinator_->speechRecognized("Stopp!"), CCoordinator::VoiceDispatch::Submitted);
+    EXPECT_EQ(ActionPlannerTestAccess::normalCount(*planner_), normal + 1);
+    EXPECT_EQ(ActionPlannerTestAccess::highCount(*planner_), high);
+    const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+    const auto stop = std::dynamic_pointer_cast<RequestVelocity>(group.front());
+    ASSERT_TRUE(stop);
+    EXPECT_EQ(stop->velocity, geometry_msgs::msg::Twist());
+    EXPECT_FALSE(std::ranges::any_of(group, [](const auto& request) {
+        return std::dynamic_pointer_cast<RequestMovementType>(request) != nullptr;
+    }));
+    EXPECT_EQ(coordinator_->speechRecognized("stoppe Musik!"), CCoordinator::VoiceDispatch::Submitted);
+    const auto music = std::dynamic_pointer_cast<RequestMusic>(
+        ActionPlannerTestAccess::latestHighRequest(*planner_).front());
+    ASSERT_TRUE(music);
+    EXPECT_EQ(music->song, "STOP");
+}
+
+TEST_F(CoordinatorTest, VoiceTurnsUseYawAndDiagonalWalkingUsesBothLinearAxes) {
+    create();
+    const auto yaw = node_->get_parameter("max_velocity_rotation").as_double();
+    for (const auto& [phrase, x, y, z] : std::vector<std::tuple<std::string, double, double, double>>{
+             {"dreh dich nach links", 0., 0., yaw},
+             {"drehe rechts", 0., 0., -yaw},
+             {"geh nach vorne links", 0.005, 0.005, 0.},
+             {"turn left", 0., 0., yaw},
+             {"walk forward left", 0.005, 0.005, 0.},
+             {"run backwards", -0.005, 0., 0.}}) {
+        ASSERT_EQ(coordinator_->speechRecognized(phrase), CCoordinator::VoiceDispatch::Submitted);
+        const auto& group = ActionPlannerTestAccess::latestNormalRequest(*planner_);
+        const auto velocity = std::dynamic_pointer_cast<RequestVelocity>(group.back());
+        ASSERT_TRUE(velocity);
+        EXPECT_DOUBLE_EQ(velocity->velocity.linear.x, x);
+        EXPECT_DOUBLE_EQ(velocity->velocity.linear.y, y);
+        EXPECT_DOUBLE_EQ(velocity->velocity.angular.z, z);
+    }
+}
+
+TEST_F(CoordinatorTest, VoiceSensorRequestsReachDriverServices) {
+    using namespace std::chrono_literals;
+    create();
+    std::vector<std::string> received;
+    using Capture = std_srvs::srv::SetBool;
+    using Scan = std_srvs::srv::Empty;
+    auto camera = node_->create_service<Capture>(
+        "~/capture", [&](Capture::Request::SharedPtr req, Capture::Response::SharedPtr) {
+            received.emplace_back(req->data ? "camera on" : "camera off");
+        });
+    auto start = node_->create_service<Scan>(
+        "~/start_scan",
+        [&](Scan::Request::SharedPtr, Scan::Response::SharedPtr) { received.emplace_back("lidar on"); });
+    auto stop = node_->create_service<Scan>(
+        "~/stop_scan",
+        [&](Scan::Request::SharedPtr, Scan::Response::SharedPtr) { received.emplace_back("lidar off"); });
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(node_);
+    for (const auto& [phrase, expected] :
+         std::vector<std::pair<std::string, std::string>>{{"aktiviere kamera", "camera on"},
+                                                          {"deaktivier camera", "camera off"},
+                                                          {"aktivier lidar", "lidar on"},
+                                                          {"deaktivier laserscanner", "lidar off"},
+                                                          {"turn the camera on", "camera on"},
+                                                          {"disable the camera", "camera off"},
+                                                          {"enable lidar", "lidar on"},
+                                                          {"turn off the lidar", "lidar off"}}) {
+        const auto deadline = std::chrono::steady_clock::now() + 2s;
+        auto dispatch = coordinator_->speechRecognized(phrase);
+        while (dispatch == CCoordinator::VoiceDispatch::Unavailable &&
+               std::chrono::steady_clock::now() < deadline) {
+            std::this_thread::sleep_for(10ms);
+            dispatch = coordinator_->speechRecognized(phrase);
+        }
+        ASSERT_EQ(dispatch, CCoordinator::VoiceDispatch::Submitted);
+        while (received.empty() && std::chrono::steady_clock::now() < deadline) executor.spin_once(10ms);
+        ASSERT_EQ(received, std::vector<std::string>{expected});
+        received.clear();
+    }
+}
+
+TEST_F(CoordinatorTest, EveryConfiguredCommandHasAKnownDispatchOutcome) {
+    create();
+    std::ifstream file(ament_index_cpp::get_package_share_path("nira_brain") /
+                       "config/nira/interpretation.json");
+    const auto rules = nlohmann::json::parse(file);
+    using Dispatch = CCoordinator::VoiceDispatch;
+    for (const auto& [command, languages] : rules.items()) {
+        auto expected = Dispatch::Submitted;
+        if (command == "talk") expected = Dispatch::Unsupported;
+        if (command == "commandCameraOn" || command == "commandCameraOff" || command == "commandLidarOn" ||
+            command == "commandLidarOff")
+            expected = Dispatch::Unavailable;
+        for (const auto language : {"de", "en"}) {
+            const auto& groups = languages.at(language);
+            std::string phrase;
+            for (const auto& [name, aliases] : groups.items()) {
+                if (name != "exact") phrase += " " + aliases.front().get<std::string>();
+            }
+            if (phrase.empty()) phrase = groups.at("exact").front().get<std::string>();
+            EXPECT_EQ(coordinator_->speechRecognized(phrase), expected) << command << " " << phrase;
+        }
+    }
 }
 
 TEST_F(CoordinatorTest, NamedSequenceUsesNormalPriorityAndExactName) {

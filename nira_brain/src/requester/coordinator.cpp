@@ -8,6 +8,7 @@
 #include <ament_index_cpp/get_package_share_path.hpp>
 #include <cmath>
 #include <format>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 
@@ -49,7 +50,19 @@ CCoordinator::CCoordinator(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<C
     if (kMinBodyHeight_ > 0.0 * m) throw std::invalid_argument("min_body_height must be <= 0");
     if (kMaxBodyHeight_ < 0.0 * m) throw std::invalid_argument("max_body_height must be >= 0");
 
-    textInterpreter_ = std::make_shared<CTextInterpreter>(node_);
+    const auto rules =
+        ament_index_cpp::get_package_share_path("nira_brain") / "config/nira/interpretation.json";
+    try {
+        std::ifstream file(rules);
+        if (!file) throw std::runtime_error("unable to open file");
+        textInterpreter_.emplace(file);
+    } catch (const std::exception& error) {
+        RCLCPP_ERROR_STREAM(node_->get_logger(),
+                            "Voice commands disabled: " << rules << ": " << error.what());
+    }
+    cameraCapture_ = node_->create_client<std_srvs::srv::SetBool>("camera/set_capture");
+    lidarStart_ = node_->create_client<std_srvs::srv::Empty>("start_scan");
+    lidarStop_ = node_->create_client<std_srvs::srv::Empty>("stop_scan");
     errorManagement_ = std::make_shared<CErrorManagement>(node_);
     sequenceParser_ = std::make_shared<CSequenceParser>(node_);
 
@@ -225,50 +238,59 @@ CCoordinator::MovementCommand CCoordinator::movementFromJoystick(const JoystickR
             .velocity = velocity.toMsg()};
 }
 
-void CCoordinator::speechRecognized(std::string text) {
-    auto identifiedWords = textInterpreter_->parseText(text);
-    auto command = textInterpreter_->searchInterpretation(identifiedWords);
-    RCLCPP_INFO_STREAM(node_->get_logger(), "next command is: " << command);
+namespace {
+
+template <typename Service>
+CCoordinator::VoiceDispatch sendSensorRequest(rclcpp::Logger logger,
+                                              const std::shared_ptr<rclcpp::Client<Service>>& client,
+                                              const std::shared_ptr<typename Service::Request>& request) {
+    if (!client->service_is_ready()) {
+        RCLCPP_WARN(logger, "Voice command service unavailable: %s", client->get_service_name());
+        return CCoordinator::VoiceDispatch::Unavailable;
+    }
+    // These driver replies do not confirm sensor state. Track dispatch only.
+    auto pending = client->async_send_request(request);
+    client->remove_pending_request(pending);
+    return CCoordinator::VoiceDispatch::Submitted;
+}
+
+}  // namespace
+
+CCoordinator::VoiceDispatch CCoordinator::speechRecognized(std::string_view text) {
+    if (!textInterpreter_) return VoiceDispatch::Unavailable;
+    const auto result = textInterpreter_->interpret(text);
+    if (result.status != InterpretationStatus::Matched) return VoiceDispatch::Ignored;
+    const auto& command = result.command;
+    RCLCPP_INFO_STREAM(node_->get_logger(), "Voice command: " << command);
 
     // Check if command matches a sequence from YAML
     auto sequence = sequenceParser_->getSequenceForVoiceRequest(command);
     if (sequence) {
         executeSequence(sequence->get(), Prio::High);
-        return;
+        return VoiceDispatch::Submitted;
     }
 
-    if (command == "commandMove" || command == "commandRun") {
-        constexpr auto kVelocityLinear_ = 0.005 * m / s;
-        Velocity velocity;
-        if (textInterpreter_->lettersIdentified("vorn", identifiedWords) ||
-            textInterpreter_->lettersIdentified("vorne", identifiedWords)) {
-            velocity.linear.x = kVelocityLinear_;
-        } else if (textInterpreter_->lettersIdentified("hinten", identifiedWords)) {
-            velocity.linear.x = -kVelocityLinear_;
-        }
-        if (textInterpreter_->lettersIdentified("links", identifiedWords)) {
-            velocity.linear.y = kVelocityLinear_;
-        } else if (textInterpreter_->lettersIdentified("rechts", identifiedWords)) {
-            velocity.linear.y = -kVelocityLinear_;
-        }
-        RCLCPP_INFO_STREAM(node_->get_logger(), "submit move request");
+    if (command == "commandMove" || command == "commandRun" || command == "commandTurn") {
+        constexpr auto walking_speed = 0.005 * m / s;
         const bool running = command == "commandRun";
-        submitRequestMove({.type = running ? MovementRequest::MOVE_TRIPOD : MovementRequest::MOVE_COMBINED,
-                           .duration = 0 * s,
-                           .comment = running ? "ich renne los" : "ich laufe los",
-                           .priority = Prio::Normal,
-                           .velocity = velocity.toMsg()});
-    } else if (command == "commandBite" || command == "commandStomp") {
-        RCLCPP_WARN_STREAM(node_->get_logger(), "No gait implemented for voice command: " << command);
-    } else if (command == "commandStopMove") {
-        RCLCPP_INFO_STREAM(node_->get_logger(), "submit stop move request");
+        const bool turning = command == "commandTurn";
         Velocity velocity;
-        submitRequestMove({.type = MovementRequest::MOVE_COMBINED,
-                           .duration = 0 * s,
-                           .comment = "ich halte an",
-                           .priority = Prio::Normal,
-                           .velocity = velocity.toMsg()});
-
+        if (turning) {
+            velocity.angular.z = result.left * kMaxVelocityRotation_;
+        } else {
+            velocity.linear.x = result.forward * walking_speed;
+            velocity.linear.y = result.left * walking_speed;
+        }
+        submitRequestMove(
+            {.type = running ? MovementRequest::MOVE_TRIPOD : MovementRequest::MOVE_COMBINED,
+             .duration = 0 * s,
+             .comment = turning ? "ich drehe mich" : (running ? "ich renne los" : "ich laufe los"),
+             .priority = Prio::Normal,
+             .velocity = velocity.toMsg()});
+    } else if (command == "commandStopMove") {
+        auto speech = std::make_shared<RequestTalking>();
+        speech->text = "ich halte an";
+        actionPlanner_->request({std::make_shared<RequestVelocity>(), speech}, Prio::Normal);
     } else if (command == "tellMeSupplyVoltage") {
         requestTellSupplyVoltage(Prio::Normal);
     } else if (command == "tellMeServoVoltage") {
@@ -279,7 +301,19 @@ void CCoordinator::speechRecognized(std::string text) {
         requestMusikOn(Prio::Normal);
     } else if (command == "musicOff") {
         requestMusikOff(Prio::High);
+    } else if (command == "commandCameraOn" || command == "commandCameraOff") {
+        auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+        request->data = command == "commandCameraOn";
+        return sendSensorRequest(node_->get_logger(), cameraCapture_, request);
+    } else if (command == "commandLidarOn" || command == "commandLidarOff") {
+        const auto& client = command == "commandLidarOn" ? lidarStart_ : lidarStop_;
+        return sendSensorRequest(node_->get_logger(), client,
+                                 std::make_shared<std_srvs::srv::Empty::Request>());
+    } else {
+        RCLCPP_WARN_STREAM(node_->get_logger(), "No handler or sequence for voice command: " << command);
+        return VoiceDispatch::Unsupported;
     }
+    return VoiceDispatch::Submitted;
 }
 
 void CCoordinator::supplyVoltageReceived(float voltage) {

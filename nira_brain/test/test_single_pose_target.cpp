@@ -407,12 +407,12 @@ TEST_F(SinglePoseTargetTest, HotDogsAccentsFinishWithOriginalFeetAndNeutralBody)
     }
 }
 
-TEST_F(SinglePoseTargetTest, BiteRestoresStartingPoseWithoutVoiceTrigger) {
+TEST_F(SinglePoseTargetTest, VoiceBiteRestoresStartingPose) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(NIRA_SEQUENCES_DIRECTORY) + "/bite.yaml"));
-    EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandBite"));
-    const auto sequence = parser.getSequence("bite");
+    const auto sequence = parser.getSequenceForVoiceRequest("commandBite");
     ASSERT_TRUE(sequence);
+    EXPECT_EQ(sequence->get().name, "bite");
     const auto& groups = sequence->get().actionGroups;
     ASSERT_EQ(groups.size(), 6u);
     const auto origin = bodyPose(*model);
@@ -454,9 +454,9 @@ TEST_F(SinglePoseTargetTest, BiteRestoresStartingPoseWithoutVoiceTrigger) {
 TEST_F(SinglePoseTargetTest, StompAnnouncesLiftsStrikesAndRestoresRightFrontLeg) {
     CSequenceParser parser(node);
     ASSERT_TRUE(parser.parseFile(std::string(NIRA_SEQUENCES_DIRECTORY) + "/stomp.yaml"));
-    EXPECT_FALSE(parser.getSequenceForVoiceRequest("commandStomp"));
-    const auto sequence = parser.getSequence("stomp");
+    const auto sequence = parser.getSequenceForVoiceRequest("commandStomp");
     ASSERT_TRUE(sequence);
+    EXPECT_EQ(sequence->get().name, "stomp");
     const auto& groups = sequence->get().actionGroups;
     ASSERT_EQ(groups.size(), 3u);
     const auto origin = bodyPose(*model);

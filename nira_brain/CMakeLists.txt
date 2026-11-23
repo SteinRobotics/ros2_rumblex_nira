@@ -15,6 +15,8 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(ICU REQUIRED COMPONENTS uc)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
@@ -74,6 +76,8 @@ target_link_libraries(nira_brain_lib PUBLIC
   ${nira_utils_TARGETS}
   nlohmann_json::nlohmann_json
   yaml-cpp::yaml-cpp
+  ${std_srvs_TARGETS}
+  PRIVATE ICU::uc
 )
 
 add_executable(node_brain

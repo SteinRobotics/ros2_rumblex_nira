@@ -1,6 +1,7 @@
-# Lift the right-front toe, drive it downward, then restore the starting pose.
+# Lift the right-front toe, drive it downward, then restore the starting pose. Start standing.
 name: stomp
-# Suggested gesture; start standing. No automatic voice or joystick trigger.
+trigger:
+  voice: commandStomp
 imports: [variables/common.yaml]
 variables:
   kLiftDuration: &kLiftDuration 0.5  # s
